@@ -502,14 +502,14 @@
                 html += '</div></div>';
             }
 
-            // История торгов
-            html += `
-                <div class="auction-history">
-                    <h2>📊 История торгов</h2>
-            `;
-
-            if (carData.historyAuctions && carData.historyAuctions.length > 0) {
-                carData.historyAuctions.forEach(auction => {
+            // --- НОВЫЙ БЛОК: История торгов OnePrice ---
+            const onePriceAuctions = carData.historyAuctions ? carData.historyAuctions.filter(auction => auction.onePrice != null) : [];
+            if (onePriceAuctions.length > 0) {
+                html += `
+                    <div class="auction-history">
+                        <h2>📊 История торгов OnePrice</h2>
+                `;
+                onePriceAuctions.forEach(auction => {
                     const statusClass = auction.status.code === 'SOLD' ? 'status-sold' : 'status-not-sold';
 
                     html += `
@@ -535,32 +535,21 @@
                                     <div class="detail-label">Стартовая цена</div>
                                     <div class="detail-value">${formatPrice(auction.priceStart)} ¥</div>
                                 </div>
-                    `;
-
-                    // Финальная цена (зелёная)
-                    html += `
-                        <div class="detail-item">
-                            <div class="detail-label">Финальная цена</div>
-                            <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.priceEnd)} ¥</div>
-                        </div>
-                    `;
-
-                    // Последняя ставка (зелёная, если есть)
-                    if (auction.lastBid) {
-                        html += `
-                            <div class="detail-item">
-                                <div class="detail-label">Последняя ставка</div>
-                                <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.lastBid)} ¥</div>
+                                <!-- OnePrice -->
+                                <div class="detail-item">
+                                    <div class="detail-label">OnePrice</div>
+                                    <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.onePrice)} ¥</div>
+                                </div>
+                                <!-- Финальная цена (если отличается от onePrice) -->
+                                <div class="detail-item">
+                                    <div class="detail-label">Финальная цена</div>
+                                    <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.priceEnd)} ¥</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Пробег</div>
+                                    <div class="detail-value">${formatNumber(auction.mileage)} км</div>
+                                </div>
                             </div>
-                        `;
-                    }
-
-                    html += `
-                        <div class="detail-item">
-                            <div class="detail-label">Пробег</div>
-                            <div class="detail-value">${formatNumber(auction.mileage)} км</div>
-                        </div>
-                    </div>
                     `;
 
                     // Аукционный лист теперь в сетке фотографий
@@ -583,9 +572,85 @@
 
                     html += '</div>'; // Закрытие .auction-card
                 });
+                html += '</div>'; // Закрытие .auction-history (OnePrice)
             }
+            // --- КОНЕЦ НОВОГО БЛОКА ---
 
-            html += '</div>'; // Закрытие .auction-history
+            // --- СТАРЫЙ БЛОК: История торгов (без onePrice) ---
+            const regularAuctions = carData.historyAuctions ? carData.historyAuctions.filter(auction => auction.onePrice == null) : [];
+            if (regularAuctions.length > 0) {
+                html += `
+                    <div class="auction-history">
+                        <h2>📊 История торгов</h2>
+                `;
+                regularAuctions.forEach(auction => {
+                    const statusClass = auction.status.code === 'SOLD' ? 'status-sold' : 'status-not-sold';
+
+                    html += `
+                        <div class="auction-card">
+                            <div class="auction-header">
+                                <div class="auction-date">📅 ${auction.lotTradeDate} ${auction.lotTradeTime || ''}</div>
+                                <div class="auction-status ${statusClass}">${auction.status.value}</div>
+                            </div>
+                            <div class="auction-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Аукцион</div>
+                                    <div class="detail-value">${auction.asnetName}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Лот</div>
+                                    <div class="detail-value">${auction.lotNumber}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Оценка</div>
+                                    <div class="detail-value">${auction.rating.value}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Стартовая цена</div>
+                                    <div class="detail-value">${formatPrice(auction.priceStart)} ¥</div>
+                                </div>
+                                <!-- Финальная цена (зелёная) -->
+                                <div class="detail-item">
+                                    <div class="detail-label">Финальная цена</div>
+                                    <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.priceEnd)} ¥</div>
+                                </div>
+                                <!-- Последняя ставка (зелёная, если есть) -->
+                                ${auction.lastBid ? `
+                                <div class="detail-item">
+                                    <div class="detail-label">Последняя ставка</div>
+                                    <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.lastBid)} ¥</div>
+                                </div>
+                                ` : ''}
+                                <div class="detail-item">
+                                    <div class="detail-label">Пробег</div>
+                                    <div class="detail-value">${formatNumber(auction.mileage)} км</div>
+                                </div>
+                            </div>
+                    `;
+
+                    // Аукционный лист теперь в сетке фотографий
+                    let allPhotos = [...(auction.photos || [])];
+                    if (auction.auctionList) {
+                        allPhotos.unshift(auction.auctionList);
+                    }
+
+                    if (allPhotos.length > 0) {
+                        html += '<h4 style="margin: 20px 0 10px 0; color: #667eea;">📸 Фотографии:</h4><div class="photos-grid">';
+                        allPhotos.forEach(photo => {
+                            html += `
+                                <div class="photo-item" onclick="openModal('${photo}')">
+                                    <img src="${photo}" alt="Фото автомобиля или аукционный лист">
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
+
+                    html += '</div>'; // Закрытие .auction-card
+                });
+                html += '</div>'; // Закрытие .auction-history (Regular)
+            }
+            // --- КОНЕЦ СТАРОГО БЛОКА ---
 
             content.innerHTML = html;
             content.scrollIntoView({ behavior: 'smooth' });
