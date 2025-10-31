@@ -535,15 +535,32 @@
                                     <div class="detail-label">Стартовая цена</div>
                                     <div class="detail-value">${formatPrice(auction.priceStart)} ¥</div>
                                 </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Финальная цена</div>
-                                    <div class="detail-value">${formatPrice(auction.priceEnd)} ¥</div>
-                                </div>
-                                <div class="detail-item">
-                                    <div class="detail-label">Пробег</div>
-                                    <div class="detail-value">${formatNumber(auction.mileage)} км</div>
-                                </div>
+                    `;
+
+                    // Финальная цена (зелёная)
+                    html += `
+                        <div class="detail-item">
+                            <div class="detail-label">Финальная цена</div>
+                            <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.priceEnd)} ¥</div>
+                        </div>
+                    `;
+
+                    // Последняя ставка (зелёная, если есть)
+                    if (auction.lastBid) {
+                        html += `
+                            <div class="detail-item">
+                                <div class="detail-label">Последняя ставка</div>
+                                <div class="detail-value" style="color: #28a745; font-weight: bold;">${formatPrice(auction.lastBid)} ¥</div>
                             </div>
+                        `;
+                    }
+
+                    html += `
+                        <div class="detail-item">
+                            <div class="detail-label">Пробег</div>
+                            <div class="detail-value">${formatNumber(auction.mileage)} км</div>
+                        </div>
+                    </div>
                     `;
 
                     // Аукционный лист теперь в сетке фотографий
