@@ -22,7 +22,6 @@
     .field{margin-bottom:8px}
     .label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
     .value{font-weight:600}
-    img.responsive{max-width:100%;height:auto;border-radius:8px;display:block}
     .gallery{display:flex;flex-wrap:wrap;gap:8px}
     .gallery img{width:120px;height:80px;object-fit:cover;border-radius:6px;
                  cursor:pointer;border:2px solid transparent;transition:0.2s}
@@ -36,7 +35,7 @@
     .small{font-size:13px;padding:6px 8px}
     pre.json-preview{max-height:260px;overflow:auto;background:#0f1724;
                      color:#e6eef8;padding:12px;border-radius:8px}
-    /* === Lightbox === */
+    /* Lightbox */
     #lightboxOverlay {
       position:fixed;inset:0;background:rgba(0,0,0,0.85);
       display:none;align-items:center;justify-content:center;
@@ -73,6 +72,7 @@
 
           <hr style="margin:14px 0">
 
+          <!-- === История пробега === -->
           <h3>История пробега (тыс. км)</h3>
           <canvas id="mileageChart" width="400" height="220"></canvas>
           <div class="muted" style="margin-top:6px;text-align:center;">Пробег не скручен</div>
@@ -118,10 +118,8 @@
     </div>
   </div>
 
-  <!-- === Lightbox Overlay === -->
-  <div id="lightboxOverlay">
-    <img src="" alt="Просмотр изображения" />
-  </div>
+  <!-- Lightbox -->
+  <div id="lightboxOverlay"><img src="" alt="Просмотр изображения" /></div>
 
   <script>
     const $ = id => document.getElementById(id)
@@ -137,16 +135,10 @@
     const lightbox = $('lightboxOverlay')
     const lightboxImg = lightbox.querySelector('img')
 
-    function openLightbox(src) {
-      lightboxImg.src = src
-      lightbox.style.display = 'flex'
-    }
-    function closeLightbox() {
-      lightbox.style.display = 'none'
-      lightboxImg.src = ''
-    }
-    lightbox.addEventListener('click', closeLightbox)
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox() })
+    function openLightbox(src){lightboxImg.src=src;lightbox.style.display='flex'}
+    function closeLightbox(){lightbox.style.display='none';lightboxImg.src=''}
+    lightbox.addEventListener('click',closeLightbox)
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()})
 
     function safeGet(obj, path, def=null){
       try{return path.split('.').reduce((s,k)=>s?.[k],obj)??def}catch{return def}
@@ -170,7 +162,7 @@
       if(!photos.length) gallery.innerHTML='<div class="muted">Фотографий нет</div>'
       else photos.forEach(src=>{
         const img=document.createElement('img')
-        img.src=src; img.alt='photo'
+        img.src=src;img.alt='photo'
         img.addEventListener('click',()=>openLightbox(src))
         gallery.appendChild(img)
       })
@@ -182,57 +174,57 @@
       if(auctionTrans){auctionTransImg.src=auctionTrans;auctionTransImg.onclick=()=>openLightbox(auctionTrans)}
 
       // === История пробега (Chart.js) ===
-      const mileage = data.historyMileage || {}
-      const ctx = document.getElementById('mileageChart').getContext('2d')
+      const mileage=data.historyMileage||{}
+      const ctx=document.getElementById('mileageChart').getContext('2d')
+      if(window.mileageChart&&typeof window.mileageChart.destroy==='function'){window.mileageChart.destroy()}
 
-      if (window.mileageChart && typeof window.mileageChart.destroy === 'function') {
-        window.mileageChart.destroy()
-      }
+      const mileagePoints=Object.entries(mileage)
+        .map(([dateStr,obj])=>{
+          const d=new Date(dateStr)
+          const timestamp=!isNaN(d.getTime())?d.getTime():parseInt(dateStr)||0
+          return{
+            label:!isNaN(d.getTime())?d.toISOString().split('T')[0]:dateStr,
+            timestamp,
+            value:obj?.value?parseFloat(obj.value):null
+          }
+        })
+        .filter(p=>p.value!==null)
+        .sort((a,b)=>a.timestamp-b.timestamp)
 
-      const mileagePoints = Object.entries(mileage)
-        .map(([year, v]) => ({
-          year: parseInt(year),
-          value: v?.value ? parseFloat(v.value) : null
-        }))
-        .filter(p => !isNaN(p.year) && p.value !== null)
-        .sort((a, b) => a.year - b.year)
-
-      if (!mileagePoints.length) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-        ctx.font = '14px sans-serif'
-        ctx.fillText('Нет данных по пробегу', 20, 40)
-      } else {
-        window.mileageChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: mileagePoints.map(p => p.year),
-            datasets: [{
-              label: 'Пробег не скручен',
-              data: mileagePoints.map(p => p.value),
-              borderColor: '#16a34a',
-              backgroundColor: '#16a34a',
-              tension: 0.3,
-              fill: false,
-              pointBackgroundColor: '#fff',
-              pointBorderColor: '#16a34a',
-              pointRadius: 5,
-              pointHoverRadius: 6,
-              borderWidth: 2
+      if(!mileagePoints.length){
+        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
+        ctx.font='14px sans-serif'
+        ctx.fillText('Нет данных по пробегу',20,40)
+      }else{
+        const labels=mileagePoints.map(p=>{
+          const d=new Date(p.label)
+          return isNaN(d.getTime())?p.label:d.getFullYear().toString()
+        })
+        const values=mileagePoints.map(p=>(p.value/1000).toFixed(1))
+        window.mileageChart=new Chart(ctx,{
+          type:'line',
+          data:{
+            labels,
+            datasets:[{
+              label:'Пробег не скручен',
+              data:values,
+              borderColor:'#16a34a',
+              backgroundColor:'#16a34a',
+              tension:0.3,
+              fill:false,
+              pointBackgroundColor:'#fff',
+              pointBorderColor:'#16a34a',
+              pointRadius:5,
+              pointHoverRadius:6,
+              borderWidth:2
             }]
           },
-          options: {
-            scales: {
-              x: {
-                title: { display: true, text: 'Год' },
-                grid: { color: 'rgba(0,0,0,0.05)' }
-              },
-              y: {
-                title: { display: true, text: 'тыс. км' },
-                beginAtZero: true,
-                grid: { color: 'rgba(0,0,0,0.05)' }
-              }
+          options:{
+            scales:{
+              x:{title:{display:true,text:'Год / Дата'},grid:{color:'rgba(0,0,0,0.05)'}},
+              y:{title:{display:true,text:'Пробег (тыс. км)'},beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}
             },
-            plugins: { legend: { display: false } }
+            plugins:{legend:{display:false}}
           }
         })
       }
@@ -240,7 +232,7 @@
       // === История торгов ===
       historyBlock.innerHTML=''
       const hist=data.historyAuctions||[]
-      if(!hist.length) historyBlock.innerHTML='<div class="muted">История торгов отсутствует</div>'
+      if(!hist.length)historyBlock.innerHTML='<div class="muted">История торгов отсутствует</div>'
       else hist.forEach((h,idx)=>{
         const row=document.createElement('div')
         row.className='card';row.style.marginBottom='10px'
@@ -262,7 +254,7 @@
         historyBlock.appendChild(row)
         const g=row.querySelector(`#gallery-${idx}`)
         const photos=h.photos||[]
-        if(!photos.length) g.innerHTML='<div class="muted">Нет фото</div>'
+        if(!photos.length)g.innerHTML='<div class="muted">Нет фото</div>'
         else photos.forEach(p=>{
           const im=document.createElement('img')
           im.src=p;im.alt='lot';im.addEventListener('click',()=>openLightbox(p))
@@ -279,6 +271,7 @@
       jsonPreview.textContent=JSON.stringify(data,null,2)
     }
 
+    // === Загрузка JSON ===
     fileInput.addEventListener('change',e=>{
       const f=e.target.files?.[0];if(!f)return
       const reader=new FileReader()
@@ -288,6 +281,7 @@
       reader.readAsText(f,'utf-8')
     })
 
+    // === Пример ===
     exampleBtn.addEventListener('click',async()=>{
       try{
         const r=await fetch('./example.json')
