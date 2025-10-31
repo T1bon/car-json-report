@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Car JSON Report — Отчёт об автомобиле</title>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     :root{--bg:#f6f7fb;--card:#ffffff;--accent:#1f6feb;--muted:#6b7280}
     body{font-family:Inter, system-ui, -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
@@ -35,13 +32,24 @@
     .small{font-size:13px;padding:6px 8px}
     pre.json-preview{max-height:260px;overflow:auto;background:#0f1724;
                      color:#e6eef8;padding:12px;border-radius:8px}
+    /* Таблица */
+    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+    th,td{border-bottom:1px solid #e5e7eb;padding:8px 6px;text-align:left}
+    th{color:var(--muted);font-weight:600}
+    tr:hover td{background:#f9fafb}
+    /* Важная информация */
+    .attention-card{background:#fff3cd;border-left:5px solid #facc15;
+      padding:12px 14px;border-radius:8px;margin-bottom:16px}
+    .attention-card h3{margin:0 0 8px 0;font-size:16px;color:#92400e}
+    .attention-card ul{margin:0;padding-left:20px;color:#78350f}
+    .attention-card li{margin-bottom:4px}
     /* Lightbox */
-    #lightboxOverlay {
+    #lightboxOverlay{
       position:fixed;inset:0;background:rgba(0,0,0,0.85);
       display:none;align-items:center;justify-content:center;
       z-index:1000;cursor:zoom-out;
     }
-    #lightboxOverlay img {
+    #lightboxOverlay img{
       max-width:95%;max-height:95%;border-radius:10px;
       box-shadow:0 0 20px rgba(0,0,0,0.5);
     }
@@ -62,6 +70,10 @@
       <div class="grid">
         <div>
           <h2 id="carTitle">—</h2>
+
+          <!-- === Важная информация === -->
+          <div id="attentionBlock"></div>
+
           <div class="field"><span class="label">VIN</span><div id="vin" class="value">—</div></div>
           <div class="field"><span class="label">Производитель</span><div id="company" class="value">—</div></div>
           <div class="field"><span class="label">Модель</span><div id="model" class="value">—</div></div>
@@ -73,12 +85,12 @@
           <hr style="margin:14px 0">
 
           <!-- === История пробега === -->
-          <h3>История пробега (тыс. км)</h3>
-          <canvas id="mileageChart" width="400" height="220"></canvas>
-          <div class="muted" style="margin-top:6px;text-align:center;">Пробег не скручен</div>
+          <h3>История пробега</h3>
+          <div id="mileageTableContainer"></div>
 
           <hr style="margin:14px 0">
 
+          <!-- === История торгов === -->
           <h3>История торгов</h3>
           <div id="historyAuctions"></div>
         </div>
@@ -140,10 +152,6 @@
     lightbox.addEventListener('click',closeLightbox)
     document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()})
 
-    function safeGet(obj, path, def=null){
-      try{return path.split('.').reduce((s,k)=>s?.[k],obj)??def}catch{return def}
-    }
-
     function renderReport(data){
       reportArea.hidden=false
       const c=data.characteristics||{}
@@ -155,6 +163,19 @@
       $('fuelType').textContent=c.fuelType||'—'
       $('engineCapacity').textContent=c.engineCapacity||'—'
       $('registrationDate').textContent=c.registrationDate||'—'
+
+      // === Важная информация ===
+      const attentionBlock = $('attentionBlock')
+      const attention = data.attention || []
+      attentionBlock.innerHTML = ''
+      if (attention.length) {
+        const div = document.createElement('div')
+        div.className = 'attention-card'
+        div.innerHTML = '<h3>⚠️ Важная информация</h3><ul>' +
+          attention.map(a => `<li>${a}</li>`).join('') +
+          '</ul>'
+        attentionBlock.appendChild(div)
+      }
 
       // === Галерея ===
       gallery.innerHTML=''
@@ -173,60 +194,35 @@
       if(auctionList){auctionListImg.src=auctionList;auctionListImg.onclick=()=>openLightbox(auctionList)}
       if(auctionTrans){auctionTransImg.src=auctionTrans;auctionTransImg.onclick=()=>openLightbox(auctionTrans)}
 
-      // === История пробега (Chart.js) ===
-      const mileage=data.historyMileage||{}
-      const ctx=document.getElementById('mileageChart').getContext('2d')
-      if(window.mileageChart&&typeof window.mileageChart.destroy==='function'){window.mileageChart.destroy()}
-
-      const mileagePoints=Object.entries(mileage)
-        .map(([dateStr,obj])=>{
-          const d=new Date(dateStr)
-          const timestamp=!isNaN(d.getTime())?d.getTime():parseInt(dateStr)||0
-          return{
-            label:!isNaN(d.getTime())?d.toISOString().split('T')[0]:dateStr,
-            timestamp,
-            value:obj?.value?parseFloat(obj.value):null
-          }
+      // === История пробега (таблица) ===
+      const mileageContainer = $('mileageTableContainer')
+      const mileage = data.historyMileage || {}
+      mileageContainer.innerHTML = ''
+      const entries = Object.entries(mileage)
+        .map(([key,val])=>{
+          let dateStr = key
+          // если ключ — только год, добавляем "-01-01"
+          if (/^\d{4}$/.test(key)) dateStr = `${key}-01-01`
+          const d = new Date(dateStr)
+          const formatted = !isNaN(d) ? d.toISOString().split('T')[0] : key
+          return {date: formatted, value: val?.value ?? null}
         })
-        .filter(p=>p.value!==null)
-        .sort((a,b)=>a.timestamp-b.timestamp)
+        .filter(x=>x.value!==null)
+        .sort((a,b)=>new Date(a.date)-new Date(b.date))
 
-      if(!mileagePoints.length){
-        ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
-        ctx.font='14px sans-serif'
-        ctx.fillText('Нет данных по пробегу',20,40)
+      if(!entries.length){
+        mileageContainer.innerHTML = '<div class="muted">Нет данных по пробегу</div>'
       }else{
-        const labels=mileagePoints.map(p=>{
-          const d=new Date(p.label)
-          return isNaN(d.getTime())?p.label:d.getFullYear().toString()
+        const table=document.createElement('table')
+        table.innerHTML='<thead><tr><th>Дата</th><th>Пробег (км)</th></tr></thead>'
+        const tbody=document.createElement('tbody')
+        entries.forEach(e=>{
+          const tr=document.createElement('tr')
+          tr.innerHTML=`<td>${e.date}</td><td>${e.value.toLocaleString('ru-RU')}</td>`
+          tbody.appendChild(tr)
         })
-        const values=mileagePoints.map(p=>(p.value/1000).toFixed(1))
-        window.mileageChart=new Chart(ctx,{
-          type:'line',
-          data:{
-            labels,
-            datasets:[{
-              label:'Пробег не скручен',
-              data:values,
-              borderColor:'#16a34a',
-              backgroundColor:'#16a34a',
-              tension:0.3,
-              fill:false,
-              pointBackgroundColor:'#fff',
-              pointBorderColor:'#16a34a',
-              pointRadius:5,
-              pointHoverRadius:6,
-              borderWidth:2
-            }]
-          },
-          options:{
-            scales:{
-              x:{title:{display:true,text:'Год / Дата'},grid:{color:'rgba(0,0,0,0.05)'}},
-              y:{title:{display:true,text:'Пробег (тыс. км)'},beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}
-            },
-            plugins:{legend:{display:false}}
-          }
-        })
+        table.appendChild(tbody)
+        mileageContainer.appendChild(table)
       }
 
       // === История торгов ===
@@ -243,7 +239,7 @@
               <div class="muted" style="font-size:13px">${h.lotTradeDate||''}</div></div>
             <div style="text-align:right">
               <div class="label">Статус</div>
-              <div class="value">${safeGet(h,'status.value')||h.status||'—'}</div>
+              <div class="value">${h.status?.value||h.status||'—'}</div>
               <div class="muted">${h.priceEnd?'Итог: '+h.priceEnd:''}</div>
             </div>
           </div>
@@ -281,7 +277,6 @@
       reader.readAsText(f,'utf-8')
     })
 
-    // === Пример ===
     exampleBtn.addEventListener('click',async()=>{
       try{
         const r=await fetch('./example.json')
