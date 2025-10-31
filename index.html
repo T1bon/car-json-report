@@ -3,38 +3,46 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>JapanStat - Viewer</title>
+  <title>Car JSON Report — Отчёт об автомобиле</title>
+
+  <!-- Chart.js для графика пробега -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root{--bg:#f6f7fb;--card:#ffffff;--accent:#1f6feb;--muted:#6b7280}
-    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:var(--bg); margin:0; padding:24px; color:#111}
+    body{font-family:Inter, system-ui, -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+         background:var(--bg);margin:0;padding:24px;color:#111}
     .container{max-width:1100px;margin:0 auto}
     header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
     header h1{margin:0;font-size:20px}
     .uploader{display:flex;gap:8px;align-items:center}
-    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 20px rgba(16,24,40,0.06);margin-bottom:16px}
+    .card{background:var(--card);border-radius:12px;padding:18px;
+          box-shadow:0 6px 20px rgba(16,24,40,0.06);margin-bottom:16px}
     .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
     .field{margin-bottom:8px}
     .label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
     .value{font-weight:600}
     img.responsive{max-width:100%;height:auto;border-radius:8px;display:block}
     .gallery{display:flex;flex-wrap:wrap;gap:8px}
-    .gallery img{width:120px;height:80px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent}
+    .gallery img{width:120px;height:80px;object-fit:cover;border-radius:6px;
+                 cursor:pointer;border:2px solid transparent}
     .gallery img:hover{border-color:var(--accent)}
-    .auction-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
-    .auction-sheet {width:100%;height:auto;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+    .auction-sheet{width:100%;height:auto;border-radius:8px;
+                   box-shadow:0 6px 18px rgba(0,0,0,0.08)}
     .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .muted{color:var(--muted)}
-    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;
+         border:0;cursor:pointer}
     .small{font-size:13px;padding:6px 8px}
-    .notice{font-size:13px;color:var(--muted)}
-    pre.json-preview{max-height:260px;overflow:auto;background:#0f1724;color:#e6eef8;padding:12px;border-radius:8px}
+    pre.json-preview{max-height:260px;overflow:auto;background:#0f1724;
+                     color:#e6eef8;padding:12px;border-radius:8px}
     @media(max-width:980px){.grid{grid-template-columns:1fr} .two-col{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>JapanStat - Viewer</h1>
+      <h1>Car JSON Report — загрузка отчёта</h1>
       <div style="margin-left:auto" class="uploader">
         <input id="fileInput" type="file" accept=".json" />
         <button id="exampleBtn" class="btn small">Загрузить пример</button>
@@ -42,7 +50,6 @@
     </header>
 
     <div id="reportArea" class="card" hidden>
-      <!-- Основной блок -->
       <div class="grid">
         <div>
           <h2 id="carTitle">—</h2>
@@ -56,14 +63,16 @@
 
           <hr style="margin:14px 0">
 
-          <h3>История пробега</h3>
-          <div id="mileageBlock" class="muted">—</div>
+          <!-- === История пробега === -->
+          <h3>История пробега (тыс. км)</h3>
+          <canvas id="mileageChart" width="400" height="220"></canvas>
+          <div class="muted" style="margin-top:6px;text-align:center;">Пробег не скручен</div>
 
           <hr style="margin:14px 0">
 
+          <!-- === История торгов === -->
           <h3>История торгов</h3>
           <div id="historyAuctions"></div>
-
         </div>
 
         <aside>
@@ -73,44 +82,39 @@
           <hr style="margin:12px 0">
 
           <h3>Аукционные листы</h3>
-          <div class="muted">Аукционный лист (оригинал) и перевод</div>
-          <div style="margin-top:8px" class="two-col">
+          <div class="two-col">
             <div>
               <a id="auctionListLink" target="_blank" rel="noopener">
                 <img id="auctionListImg" class="auction-sheet" src="" alt="auction list">
               </a>
-              <div class="muted" style="font-size:13px;margin-top:6px">Оригинал — клик для открытия</div>
+              <div class="muted" style="font-size:13px;margin-top:6px">Оригинал</div>
             </div>
             <div>
               <a id="auctionTransLink" target="_blank" rel="noopener">
                 <img id="auctionTransImg" class="auction-sheet" src="" alt="auction translation">
               </a>
-              <div class="muted" style="font-size:13px;margin-top:6px">Перевод — клик для открытия</div>
+              <div class="muted" style="font-size:13px;margin-top:6px">Перевод</div>
             </div>
           </div>
 
           <div style="margin-top:12px">
-            <button id="printBtn" class="btn small">Печатать / Сохранить как PDF</button>
+            <button id="printBtn" class="btn small">Печатать / PDF</button>
           </div>
         </aside>
       </div>
 
       <hr style="margin:16px 0">
 
-      <h3>JSON — превью (для отладки)</h3>
+      <h3>JSON — превью</h3>
       <pre id="jsonPreview" class="json-preview"></pre>
-
     </div>
 
     <div id="emptyNotice" class="card">
-      <div class="notice">Загрузите JSON-файл отчёта автомобиля (пример приложен). Сайт поддерживает поля:<br>
-      <strong>characteristics</strong> (name, vin, dateManufacture, company, model, fuelType, engineCapacity, registrationDate, auctionList, photos), <strong>historyAuctions</strong> (photos, auctionList, lotTradeDate и т.д.), <strong>auctionSheetTranslationLink</strong>.</div>
+      <div class="muted">Загрузите JSON-файл отчёта автомобиля (пример — example.json).</div>
     </div>
-
   </div>
 
   <script>
-    // Помощники
     const $ = id => document.getElementById(id)
     const fileInput = $('fileInput')
     const exampleBtn = $('exampleBtn')
@@ -124,169 +128,128 @@
     const auctionTransLink = $('auctionTransLink')
     const printBtn = $('printBtn')
 
-    function safeGet(obj, path, def = null) {
-      try {
-        return path.split('.').reduce((s,k)=>s && s[k] !== undefined ? s[k] : null, obj) ?? def
-      } catch(e){ return def }
+    function safeGet(obj, path, def=null){
+      try{return path.split('.').reduce((s,k)=>s?.[k],obj)??def}catch{return def}
     }
 
-    function renderReport(data) {
-      reportArea.hidden = false
-      // показать основные характеристики
-      const c = data.characteristics || {}
-      $('carTitle').textContent = c.name || c.nameFull || '—'
-      $('vin').textContent = c.vin || c.vinFull || '—'
-      $('company').textContent = c.company || '—'
-      $('model').textContent = c.model || '—'
-      $('dateManufacture').textContent = c.dateManufacture || '—'
-      $('fuelType').textContent = c.fuelType || '—'
-      $('engineCapacity').textContent = c.engineCapacity || '—'
-      $('registrationDate').textContent = c.registrationDate || '—'
+    function renderReport(data){
+      reportArea.hidden=false
+      const c=data.characteristics||{}
+      $('carTitle').textContent=c.name||'—'
+      $('vin').textContent=c.vin||'—'
+      $('company').textContent=c.company||'—'
+      $('model').textContent=c.model||'—'
+      $('dateManufacture').textContent=c.dateManufacture||'—'
+      $('fuelType').textContent=c.fuelType||'—'
+      $('engineCapacity').textContent=c.engineCapacity||'—'
+      $('registrationDate').textContent=c.registrationDate||'—'
 
       // Галерея
-      gallery.innerHTML = ''
-      const photos = c.photos || []
-      if(photos.length === 0) gallery.innerHTML = '<div class="muted">Фотографий нет</div>'
-      photos.forEach(src => {
-        const img = document.createElement('img')
-        img.src = src
-        img.alt = 'photo'
-        img.className = 'responsive'
-        img.style.width = '120px'
-        img.style.height = '80px'
-        img.style.objectFit = 'cover'
-        img.addEventListener('click', ()=> window.open(src, '_blank'))
+      gallery.innerHTML=''
+      const photos=c.photos||[]
+      if(!photos.length) gallery.innerHTML='<div class="muted">Фотографий нет</div>'
+      else photos.forEach(src=>{
+        const img=document.createElement('img')
+        img.src=src; img.alt='photo'
+        img.addEventListener('click',()=>window.open(src,'_blank'))
         gallery.appendChild(img)
       })
 
-      // Аукционный лист
-      const auctionList = c.auctionList || ''
-      const auctionTrans = data.auctionSheetTranslationLink || data.translatedAuctionList || ''
-      if(auctionList) {
-        auctionListImg.src = auctionList
-        auctionListLink.href = auctionList
+      // Аукционные листы
+      const auctionList=c.auctionList||''
+      const auctionTrans=data.auctionSheetTranslationLink||''
+      if(auctionList){auctionListImg.src=auctionList;auctionListLink.href=auctionList}
+      if(auctionTrans){auctionTransImg.src=auctionTrans;auctionTransLink.href=auctionTrans}
+
+      // === История пробега ===
+      const mileage=data.historyMileage||{}
+      const ctx=document.getElementById('mileageChart').getContext('2d')
+      const mileagePoints=Object.entries(mileage)
+        .map(([year,v])=>({year:parseInt(year),value:v?.value?parseFloat(v.value):null}))
+        .filter(p=>!isNaN(p.year)&&p.value!==null)
+        .sort((a,b)=>a.year-b.year)
+      if(window.mileageChart) window.mileageChart.destroy()
+      if(!mileagePoints.length){
+        ctx.font='14px sans-serif';ctx.fillText('Нет данных по пробегу',20,40)
       } else {
-        auctionListImg.src = ''
-        auctionListLink.removeAttribute('href')
-        auctionListImg.alt = 'нет аукционного листа'
-        auctionListImg.style.display = auctionList ? 'block' : 'none'
-      }
-      if(auctionTrans) {
-        auctionTransImg.src = auctionTrans
-        auctionTransLink.href = auctionTrans
-      } else {
-        auctionTransImg.src = ''
-        auctionTransLink.removeAttribute('href')
-        auctionTransImg.style.display = auctionTrans ? 'block' : 'none'
-      }
-
-      // История пробега
-      const mileage = data.historyMileage || {}
-      const mEntries = Object.entries(mileage).map(([k,v]) => `${k}: ${v && v.value !== undefined ? v.value : JSON.stringify(v)}`)
-      $('mileageBlock').textContent = mEntries.length ? mEntries.join(' • ') : 'Нет данных'
-
-      // История торгов
-      historyBlock.innerHTML = ''
-      const hist = data.historyAuctions || []
-      if(hist.length === 0) {
-        historyBlock.innerHTML = '<div class="muted">История торгов отсутствует</div>'
-      } else {
-        hist.forEach((h, idx) => {
-          const row = document.createElement('div')
-          row.className = 'card'
-          row.style.marginBottom = '10px'
-          row.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-              <div>
-                <div class="label">Аукцион</div>
-                <div class="value">${h.group || h.asnetName || '—'}</div>
-                <div class="muted" style="font-size:13px">${h.lotTradeDate || h.lot?.tradeDate || ''} ${h.lotTradeTime || h.lot?.tradeTime || ''}</div>
-              </div>
-              <div style="text-align:right">
-                <div class="label">Статус</div>
-                <div class="value">${safeGet(h,'status.value') || h.status || '—'}</div>
-                <div class="muted">${h.priceEnd ? 'Итог: '+h.priceEnd : ''}</div>
-              </div>
-            </div>
-            <div style="margin-top:8px">
-              <div class="muted">Фотографии лота:</div>
-              <div class="gallery" id="gallery-${idx}"></div>
-            </div>
-          `
-          historyBlock.appendChild(row)
-
-          // добавить фото
-          const g = row.querySelector(`#gallery-${idx}`)
-          const photos = h.photos || []
-          if(!photos.length) {
-            g.innerHTML = '<div class="muted">фотографий нет</div>'
-          } else {
-            photos.forEach(p => {
-              const im = document.createElement('img')
-              im.src = p
-              im.alt = 'lot photo'
-              im.style.width = '120px'
-              im.style.height = '80px'
-              im.style.objectFit = 'cover'
-              im.style.borderRadius = '6px'
-              im.addEventListener('click', ()=> window.open(p, '_blank'))
-              g.appendChild(im)
-            })
-          }
-
-          // если у записи есть auctionList, показать thumbnail с возможностью открыть
-          if(h.auctionList) {
-            const link = document.createElement('div')
-            link.style.marginTop = '8px'
-            link.innerHTML = `<a href="${h.auctionList}" target="_blank" class="muted">Открыть аукционный лист лота</a>`
-            row.appendChild(link)
-          }
+        window.mileageChart=new Chart(ctx,{
+          type:'line',
+          data:{labels:mileagePoints.map(p=>p.year),
+                datasets:[{label:'Пробег не скручен',
+                           data:mileagePoints.map(p=>p.value),
+                           borderColor:'#16a34a',backgroundColor:'#16a34a',
+                           tension:0.3,fill:false,pointBackgroundColor:'#fff',
+                           pointBorderColor:'#16a34a',pointRadius:5,
+                           pointHoverRadius:6,borderWidth:2}]},
+          options:{scales:{x:{title:{display:true,text:'Год'},
+                              grid:{color:'rgba(0,0,0,0.05)'}},
+                           y:{title:{display:true,text:'тыс. км'},
+                              beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}},
+                   plugins:{legend:{display:false}}}
         })
       }
 
-      // показать JSON превью (с форматированием)
-      try {
-        jsonPreview.textContent = JSON.stringify(data, null, 2)
-      } catch(e) {
-        jsonPreview.textContent = 'Ошибка показа JSON'
-      }
+      // === История торгов ===
+      historyBlock.innerHTML=''
+      const hist=data.historyAuctions||[]
+      if(!hist.length) historyBlock.innerHTML='<div class="muted">История торгов отсутствует</div>'
+      else hist.forEach((h,idx)=>{
+        const row=document.createElement('div')
+        row.className='card';row.style.marginBottom='10px'
+        row.innerHTML=`
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div><div class="label">Аукцион</div>
+              <div class="value">${h.group||h.asnetName||'—'}</div>
+              <div class="muted" style="font-size:13px">${h.lotTradeDate||''}</div></div>
+            <div style="text-align:right">
+              <div class="label">Статус</div>
+              <div class="value">${safeGet(h,'status.value')||h.status||'—'}</div>
+              <div class="muted">${h.priceEnd?'Итог: '+h.priceEnd:''}</div>
+            </div>
+          </div>
+          <div style="margin-top:8px">
+            <div class="muted">Фото лота:</div>
+            <div class="gallery" id="gallery-${idx}"></div>
+          </div>`
+        historyBlock.appendChild(row)
+        const g=row.querySelector(`#gallery-${idx}`)
+        const photos=h.photos||[]
+        if(!photos.length) g.innerHTML='<div class="muted">Нет фото</div>'
+        else photos.forEach(p=>{
+          const im=document.createElement('img')
+          im.src=p;im.alt='lot';im.addEventListener('click',()=>window.open(p,'_blank'))
+          g.appendChild(im)
+        })
+        if(h.auctionList){
+          const link=document.createElement('div')
+          link.style.marginTop='8px'
+          link.innerHTML=`<a href="${h.auctionList}" target="_blank" class="muted">Открыть аукционный лист</a>`
+          row.appendChild(link)
+        }
+      })
+
+      jsonPreview.textContent=JSON.stringify(data,null,2)
     }
 
-    // загрузка файла с диска
-    fileInput.addEventListener('change', (ev)=>{
-      const f = ev.target.files && ev.target.files[0]
-      if(!f) return
-      const reader = new FileReader()
-      reader.onload = e => {
-        try {
-          const parsed = JSON.parse(e.target.result)
-          renderReport(parsed)
-        } catch(err) {
-          alert('Ошибка парсинга JSON: ' + err.message)
-        }
+    fileInput.addEventListener('change',e=>{
+      const f=e.target.files?.[0];if(!f)return
+      const reader=new FileReader()
+      reader.onload=ev=>{
+        try{renderReport(JSON.parse(ev.target.result))}catch(err){alert('Ошибка JSON: '+err.message)}
       }
-      reader.readAsText(f, 'utf-8')
+      reader.readAsText(f,'utf-8')
     })
 
-    // кнопка загрузки примера — мы подгрузим встроенный пример (для демонстрации)
-    exampleBtn.addEventListener('click', async ()=>{
-      // встроенный пример minimal (если хочешь, можно подменить URL на локальный или взять из textarea)
-      // Но для оффлайн-режима — предлагаем открыть пример через встроенный fetch к файлу example.json в той же папке (если есть).
-      // Попробуем загрузить /example.json — если его нет, откроем окно выбора файла.
-      try {
-        const resp = await fetch('./example.json')
-        if(!resp.ok) throw new Error('no example.json')
-        const data = await resp.json()
-        renderReport(data)
-      } catch(e) {
-        alert('Пример не найден в example.json — пожалуйста, просто выбери твой загруженный JSON через кнопку Файл.')
-      }
+    exampleBtn.addEventListener('click',async()=>{
+      try{
+        const r=await fetch('./example.json')
+        if(!r.ok)throw 0
+        const d=await r.json()
+        renderReport(d)
+      }catch{alert('example.json не найден — выберите файл вручную.')}
     })
 
-    // печать / сохранить как PDF
-    printBtn.addEventListener('click', ()=> window.print())
-
-    // При загрузке страницы — прячем reportArea (он изначально скрыт)
+    printBtn.addEventListener('click',()=>window.print())
   </script>
 </body>
 </html>
