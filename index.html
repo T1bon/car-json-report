@@ -417,9 +417,9 @@
         function displayReport() {
             const content = document.getElementById('reportContent');
             content.style.display = 'block';
-            
+
             const chars = carData.characteristics;
-            
+
             let html = `
                 <div class="car-info">
                     <h2>${chars.name || 'Информация недоступна'}</h2>
@@ -511,7 +511,7 @@
             if (carData.historyAuctions && carData.historyAuctions.length > 0) {
                 carData.historyAuctions.forEach(auction => {
                     const statusClass = auction.status.code === 'SOLD' ? 'status-sold' : 'status-not-sold';
-                    
+
                     html += `
                         <div class="auction-card">
                             <div class="auction-header">
@@ -546,6 +546,14 @@
                             </div>
                     `;
 
+                    // Аукционный лист перед фотографиями
+                    if (auction.auctionList) {
+                        html += `
+                            <h4 style="margin: 20px 0 10px 0; color: #667eea;">📄 Аукционный лист:</h4>
+                            <img src="${auction.auctionList}" style="max-width: 100%; border-radius: 10px; cursor: pointer;" onclick="openModal('${auction.auctionList}')" alt="Аукционный лист">
+                        `;
+                    }
+
                     if (auction.photos && auction.photos.length > 0) {
                         html += '<h4 style="margin: 20px 0 10px 0; color: #667eea;">📸 Фотографии:</h4><div class="photos-grid">';
                         auction.photos.forEach(photo => {
@@ -558,18 +566,11 @@
                         html += '</div>';
                     }
 
-                    if (auction.auctionList) {
-                        html += `
-                            <h4 style="margin: 20px 0 10px 0; color: #667eea;">📄 Аукционный лист:</h4>
-                            <img src="${auction.auctionList}" style="max-width: 100%; border-radius: 10px; cursor: pointer;" onclick="openModal('${auction.auctionList}')" alt="Аукционный лист">
-                        `;
-                    }
-
-                    html += '</div>';
+                    html += '</div>'; // Закрытие .auction-card
                 });
             }
 
-            html += '</div>';
+            html += '</div>'; // Закрытие .auction-history
 
             content.innerHTML = html;
             content.scrollIntoView({ behavior: 'smooth' });
