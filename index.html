@@ -546,20 +546,18 @@
                             </div>
                     `;
 
-                    // Аукционный лист перед фотографиями
+                    // Аукционный лист теперь в сетке фотографий
+                    let allPhotos = [...(auction.photos || [])];
                     if (auction.auctionList) {
-                        html += `
-                            <h4 style="margin: 20px 0 10px 0; color: #667eea;">📄 Аукционный лист:</h4>
-                            <img src="${auction.auctionList}" style="max-width: 100%; border-radius: 10px; cursor: pointer;" onclick="openModal('${auction.auctionList}')" alt="Аукционный лист">
-                        `;
+                        allPhotos.unshift(auction.auctionList);
                     }
 
-                    if (auction.photos && auction.photos.length > 0) {
+                    if (allPhotos.length > 0) {
                         html += '<h4 style="margin: 20px 0 10px 0; color: #667eea;">📸 Фотографии:</h4><div class="photos-grid">';
-                        auction.photos.forEach(photo => {
+                        allPhotos.forEach(photo => {
                             html += `
                                 <div class="photo-item" onclick="openModal('${photo}')">
-                                    <img src="${photo}" alt="Фото автомобиля">
+                                    <img src="${photo}" alt="Фото автомобиля или аукционный лист">
                                 </div>
                             `;
                         });
