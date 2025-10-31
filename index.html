@@ -1,292 +1,540 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Car JSON Report — Отчёт об автомобиле</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчёт об автомобиле - Japan Stat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <style>
-    :root{--bg:#f6f7fb;--card:#ffffff;--accent:#1f6feb;--muted:#6b7280}
-    body{font-family:Inter, system-ui, -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-         background:var(--bg);margin:0;padding:24px;color:#111}
-    .container{max-width:1100px;margin:0 auto}
-    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-    header h1{margin:0;font-size:20px}
-    .uploader{display:flex;gap:8px;align-items:center}
-    .card{background:var(--card);border-radius:12px;padding:18px;
-          box-shadow:0 6px 20px rgba(16,24,40,0.06);margin-bottom:16px}
-    .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
-    .field{margin-bottom:8px}
-    .label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
-    .value{font-weight:600}
-    .gallery{display:flex;flex-wrap:wrap;gap:8px}
-    .gallery img{width:120px;height:80px;object-fit:cover;border-radius:6px;
-                 cursor:pointer;border:2px solid transparent;transition:0.2s}
-    .gallery img:hover{border-color:var(--accent);transform:scale(1.03)}
-    .auction-sheet{width:100%;height:auto;border-radius:8px;
-                   box-shadow:0 6px 18px rgba(0,0,0,0.08);cursor:pointer}
-    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .muted{color:var(--muted)}
-    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;
-         border:0;cursor:pointer}
-    .small{font-size:13px;padding:6px 8px}
-    pre.json-preview{max-height:260px;overflow:auto;background:#0f1724;
-                     color:#e6eef8;padding:12px;border-radius:8px}
-    /* Таблица */
-    table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
-    th,td{border-bottom:1px solid #e5e7eb;padding:8px 6px;text-align:left}
-    th{color:var(--muted);font-weight:600}
-    tr:hover td{background:#f9fafb}
-    /* Важная информация */
-    .attention-card{background:#fff3cd;border-left:5px solid #facc15;
-      padding:12px 14px;border-radius:8px;margin-bottom:16px}
-    .attention-card h3{margin:0 0 8px 0;font-size:16px;color:#92400e}
-    .attention-card ul{margin:0;padding-left:20px;color:#78350f}
-    .attention-card li{margin-bottom:4px}
-    /* Lightbox */
-    #lightboxOverlay{
-      position:fixed;inset:0;background:rgba(0,0,0,0.85);
-      display:none;align-items:center;justify-content:center;
-      z-index:1000;cursor:zoom-out;
-    }
-    #lightboxOverlay img{
-      max-width:95%;max-height:95%;border-radius:10px;
-      box-shadow:0 0 20px rgba(0,0,0,0.5);
-    }
-    @media(max-width:980px){.grid{grid-template-columns:1fr} .two-col{grid-template-columns:1fr}}
-  </style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .upload-box {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 40px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-box:hover {
+            border-color: #764ba2;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-box h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .report-content {
+            display: none;
+            padding: 40px;
+        }
+
+        .car-info {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .car-info h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .auction-history {
+            margin-bottom: 30px;
+        }
+
+        .auction-history h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .auction-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .auction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .auction-date {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .auction-status {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status-sold {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-not-sold {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .auction-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .detail-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .photo-item {
+            position: relative;
+            padding-bottom: 75%;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+
+        .photo-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .auction-sheets {
+            margin-top: 30px;
+        }
+
+        .auction-sheets h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .sheets-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .sheet-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .sheet-box h3 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .sheet-box img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .sheet-box img:hover {
+            transform: scale(1.02);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .sheets-container {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Car JSON Report — загрузка отчёта</h1>
-      <div style="margin-left:auto" class="uploader">
-        <input id="fileInput" type="file" accept=".json" />
-        <button id="exampleBtn" class="btn small">Загрузить пример</button>
-      </div>
-    </header>
-
-    <div id="reportArea" class="card" hidden>
-      <div class="grid">
-        <div>
-          <h2 id="carTitle">—</h2>
-
-          <!-- === Важная информация === -->
-          <div id="attentionBlock"></div>
-
-          <div class="field"><span class="label">VIN</span><div id="vin" class="value">—</div></div>
-          <div class="field"><span class="label">Производитель</span><div id="company" class="value">—</div></div>
-          <div class="field"><span class="label">Модель</span><div id="model" class="value">—</div></div>
-          <div class="field"><span class="label">Год производства</span><div id="dateManufacture" class="value">—</div></div>
-          <div class="field"><span class="label">Тип топлива</span><div id="fuelType" class="value">—</div></div>
-          <div class="field"><span class="label">Объём двигателя</span><div id="engineCapacity" class="value">—</div></div>
-          <div class="field"><span class="label">Дата регистрации</span><div id="registrationDate" class="value">—</div></div>
-
-          <hr style="margin:14px 0">
-
-          <!-- === История пробега === -->
-          <h3>История пробега</h3>
-          <div id="mileageTableContainer"></div>
-
-          <hr style="margin:14px 0">
-
-          <!-- === История торгов === -->
-          <h3>История торгов</h3>
-          <div id="historyAuctions"></div>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 Отчёт об автомобиле</h1>
+            <p>Japan Auction Analysis System</p>
         </div>
 
-        <aside>
-          <h3>Галерея</h3>
-          <div id="gallery" class="gallery"></div>
-
-          <hr style="margin:12px 0">
-
-          <h3>Аукционные листы</h3>
-          <div class="two-col">
-            <div>
-              <img id="auctionListImg" class="auction-sheet" src="" alt="auction list">
-              <div class="muted" style="font-size:13px;margin-top:6px">Оригинал</div>
+        <div class="upload-section">
+            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                <h2>📁 Загрузите JSON файл</h2>
+                <p>Нажмите здесь или перетащите файл</p>
+                <input type="file" id="fileInput" accept=".json">
+                <button class="btn">Выбрать файл</button>
             </div>
-            <div>
-              <img id="auctionTransImg" class="auction-sheet" src="" alt="auction translation">
-              <div class="muted" style="font-size:13px;margin-top:6px">Перевод</div>
-            </div>
-          </div>
+        </div>
 
-          <div style="margin-top:12px">
-            <button id="printBtn" class="btn small">Печатать / PDF</button>
-          </div>
-        </aside>
-      </div>
-
-      <hr style="margin:16px 0">
-
-      <h3>JSON — превью</h3>
-      <pre id="jsonPreview" class="json-preview"></pre>
+        <div class="report-content" id="reportContent"></div>
     </div>
 
-    <div id="emptyNotice" class="card">
-      <div class="muted">Загрузите JSON-файл отчёта автомобиля (пример — example.json).</div>
+    <div class="modal" id="imageModal">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
     </div>
-  </div>
 
-  <!-- Lightbox -->
-  <div id="lightboxOverlay"><img src="" alt="Просмотр изображения" /></div>
+    <script>
+        let carData = null;
 
-  <script>
-    const $ = id => document.getElementById(id)
-    const fileInput = $('fileInput')
-    const exampleBtn = $('exampleBtn')
-    const reportArea = $('reportArea')
-    const jsonPreview = $('jsonPreview')
-    const gallery = $('gallery')
-    const historyBlock = $('historyAuctions')
-    const auctionListImg = $('auctionListImg')
-    const auctionTransImg = $('auctionTransImg')
-    const printBtn = $('printBtn')
-    const lightbox = $('lightboxOverlay')
-    const lightboxImg = lightbox.querySelector('img')
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        carData = JSON.parse(event.target.result);
+                        displayReport();
+                    } catch (error) {
+                        alert('Ошибка при чтении файла: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
 
-    function openLightbox(src){lightboxImg.src=src;lightbox.style.display='flex'}
-    function closeLightbox(){lightbox.style.display='none';lightboxImg.src=''}
-    lightbox.addEventListener('click',closeLightbox)
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()})
+        function displayReport() {
+            const content = document.getElementById('reportContent');
+            content.style.display = 'block';
+            
+            const chars = carData.characteristics;
+            
+            let html = `
+                <div class="car-info">
+                    <h2>${chars.name || 'Информация недоступна'}</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">VIN номер</div>
+                            <div class="info-value">${chars.vin || 'Не указан'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Год выпуска</div>
+                            <div class="info-value">${chars.dateManufacture || 'Не указан'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Производитель</div>
+                            <div class="info-value">${chars.company || 'Не указан'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Модель</div>
+                            <div class="info-value">${chars.model || 'Не указана'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Тип топлива</div>
+                            <div class="info-value">${chars.fuelType || 'Не указан'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Объём двигателя</div>
+                            <div class="info-value">${chars.engineCapacity || 'Не указан'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Дата регистрации</div>
+                            <div class="info-value">${chars.registrationDate || 'Не указана'}</div>
+                        </div>
+                    </div>
+                </div>
 
-    function renderReport(data){
-      reportArea.hidden=false
-      const c=data.characteristics||{}
-      $('carTitle').textContent=c.name||'—'
-      $('vin').textContent=c.vin||'—'
-      $('company').textContent=c.company||'—'
-      $('model').textContent=c.model||'—'
-      $('dateManufacture').textContent=c.dateManufacture||'—'
-      $('fuelType').textContent=c.fuelType||'—'
-      $('engineCapacity').textContent=c.engineCapacity||'—'
-      $('registrationDate').textContent=c.registrationDate||'—'
+                <div class="auction-history">
+                    <h2>📊 История торгов</h2>
+            `;
 
-      // === Важная информация ===
-      const attentionBlock = $('attentionBlock')
-      const attention = data.attention || []
-      attentionBlock.innerHTML = ''
-      if (attention.length) {
-        const div = document.createElement('div')
-        div.className = 'attention-card'
-        div.innerHTML = '<h3>⚠️ Важная информация</h3><ul>' +
-          attention.map(a => `<li>${a}</li>`).join('') +
-          '</ul>'
-        attentionBlock.appendChild(div)
-      }
+            if (carData.historyAuctions && carData.historyAuctions.length > 0) {
+                carData.historyAuctions.forEach(auction => {
+                    const statusClass = auction.status.code === 'SOLD' ? 'status-sold' : 'status-not-sold';
+                    
+                    html += `
+                        <div class="auction-card">
+                            <div class="auction-header">
+                                <div class="auction-date">📅 ${auction.lotTradeDate} ${auction.lotTradeTime || ''}</div>
+                                <div class="auction-status ${statusClass}">${auction.status.value}</div>
+                            </div>
+                            <div class="auction-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Аукцион</div>
+                                    <div class="detail-value">${auction.asnetName}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Лот</div>
+                                    <div class="detail-value">${auction.lotNumber}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Оценка</div>
+                                    <div class="detail-value">${auction.rating.value}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Стартовая цена</div>
+                                    <div class="detail-value">${formatPrice(auction.priceStart)} ¥</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Финальная цена</div>
+                                    <div class="detail-value">${formatPrice(auction.priceEnd)} ¥</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Пробег</div>
+                                    <div class="detail-value">${formatNumber(auction.mileage)} км</div>
+                                </div>
+                            </div>
+                    `;
 
-      // === Галерея ===
-      gallery.innerHTML=''
-      const photos=c.photos||[]
-      if(!photos.length) gallery.innerHTML='<div class="muted">Фотографий нет</div>'
-      else photos.forEach(src=>{
-        const img=document.createElement('img')
-        img.src=src;img.alt='photo'
-        img.addEventListener('click',()=>openLightbox(src))
-        gallery.appendChild(img)
-      })
+                    if (auction.photos && auction.photos.length > 0) {
+                        html += '<h4 style="margin: 20px 0 10px 0; color: #667eea;">📸 Фотографии:</h4><div class="photos-grid">';
+                        auction.photos.forEach(photo => {
+                            html += `
+                                <div class="photo-item" onclick="openModal('${photo}')">
+                                    <img src="${photo}" alt="Фото автомобиля">
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
 
-      // === Аукционные листы ===
-      const auctionList=c.auctionList||''
-      const auctionTrans=data.auctionSheetTranslationLink||''
-      if(auctionList){auctionListImg.src=auctionList;auctionListImg.onclick=()=>openLightbox(auctionList)}
-      if(auctionTrans){auctionTransImg.src=auctionTrans;auctionTransImg.onclick=()=>openLightbox(auctionTrans)}
+                    if (auction.auctionList) {
+                        html += `
+                            <h4 style="margin: 20px 0 10px 0; color: #667eea;">📄 Аукционный лист:</h4>
+                            <img src="${auction.auctionList}" style="max-width: 100%; border-radius: 10px; cursor: pointer;" onclick="openModal('${auction.auctionList}')" alt="Аукционный лист">
+                        `;
+                    }
 
-      // === История пробега (таблица) ===
-      const mileageContainer = $('mileageTableContainer')
-      const mileage = data.historyMileage || {}
-      mileageContainer.innerHTML = ''
-      const entries = Object.entries(mileage)
-        .map(([key,val])=>{
-          let dateStr = key
-          // если ключ — только год, добавляем "-01-01"
-          if (/^\d{4}$/.test(key)) dateStr = `${key}-01-01`
-          const d = new Date(dateStr)
-          const formatted = !isNaN(d) ? d.toISOString().split('T')[0] : key
-          return {date: formatted, value: val?.value ?? null}
-        })
-        .filter(x=>x.value!==null)
-        .sort((a,b)=>new Date(a.date)-new Date(b.date))
+                    html += '</div>';
+                });
+            }
 
-      if(!entries.length){
-        mileageContainer.innerHTML = '<div class="muted">Нет данных по пробегу</div>'
-      }else{
-        const table=document.createElement('table')
-        table.innerHTML='<thead><tr><th>Дата</th><th>Пробег (км)</th></tr></thead>'
-        const tbody=document.createElement('tbody')
-        entries.forEach(e=>{
-          const tr=document.createElement('tr')
-          tr.innerHTML=`<td>${e.date}</td><td>${e.value.toLocaleString('ru-RU')}</td>`
-          tbody.appendChild(tr)
-        })
-        table.appendChild(tbody)
-        mileageContainer.appendChild(table)
-      }
+            html += '</div>';
 
-      // === История торгов ===
-      historyBlock.innerHTML=''
-      const hist=data.historyAuctions||[]
-      if(!hist.length)historyBlock.innerHTML='<div class="muted">История торгов отсутствует</div>'
-      else hist.forEach((h,idx)=>{
-        const row=document.createElement('div')
-        row.className='card';row.style.marginBottom='10px'
-        row.innerHTML=`
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-            <div><div class="label">Аукцион</div>
-              <div class="value">${h.group||h.asnetName||'—'}</div>
-              <div class="muted" style="font-size:13px">${h.lotTradeDate||''}</div></div>
-            <div style="text-align:right">
-              <div class="label">Статус</div>
-              <div class="value">${h.status?.value||h.status||'—'}</div>
-              <div class="muted">${h.priceEnd?'Итог: '+h.priceEnd:''}</div>
-            </div>
-          </div>
-          <div style="margin-top:8px">
-            <div class="muted">Фото лота:</div>
-            <div class="gallery" id="gallery-${idx}"></div>
-          </div>`
-        historyBlock.appendChild(row)
-        const g=row.querySelector(`#gallery-${idx}`)
-        const photos=h.photos||[]
-        if(!photos.length)g.innerHTML='<div class="muted">Нет фото</div>'
-        else photos.forEach(p=>{
-          const im=document.createElement('img')
-          im.src=p;im.alt='lot';im.addEventListener('click',()=>openLightbox(p))
-          g.appendChild(im)
-        })
-        if(h.auctionList){
-          const link=document.createElement('div')
-          link.style.marginTop='8px'
-          link.innerHTML=`<a href="#" class="muted" onclick="openLightbox('${h.auctionList}');return false;">Открыть аукционный лист</a>`
-          row.appendChild(link)
+            if (chars.auctionList || carData.auctionSheetTranslationLink) {
+                html += `
+                    <div class="auction-sheets">
+                        <h2>📋 Аукционные листы</h2>
+                        <div class="sheets-container">
+                `;
+
+                if (chars.auctionList) {
+                    html += `
+                        <div class="sheet-box">
+                            <h3>Оригинальный аукционный лист</h3>
+                            <img src="${chars.auctionList}" onclick="openModal('${chars.auctionList}')" alt="Оригинальный аукционный лист">
+                        </div>
+                    `;
+                }
+
+                if (carData.auctionSheetTranslationLink) {
+                    html += `
+                        <div class="sheet-box">
+                            <h3>Перевод аукционного листа</h3>
+                            <img src="${carData.auctionSheetTranslationLink}" onclick="openModal('${carData.auctionSheetTranslationLink}')" alt="Перевод аукционного листа">
+                        </div>
+                    `;
+                }
+
+                html += '</div></div>';
+            }
+
+            content.innerHTML = html;
+            content.scrollIntoView({ behavior: 'smooth' });
         }
-      })
 
-      jsonPreview.textContent=JSON.stringify(data,null,2)
-    }
+        function formatPrice(price) {
+            if (!price) return '0';
+            return parseFloat(price).toLocaleString('ru-RU');
+        }
 
-    // === Загрузка JSON ===
-    fileInput.addEventListener('change',e=>{
-      const f=e.target.files?.[0];if(!f)return
-      const reader=new FileReader()
-      reader.onload=ev=>{
-        try{renderReport(JSON.parse(ev.target.result))}catch(err){alert('Ошибка JSON: '+err.message)}
-      }
-      reader.readAsText(f,'utf-8')
-    })
+        function formatNumber(num) {
+            if (!num) return '0';
+            return parseInt(num).toLocaleString('ru-RU');
+        }
 
-    exampleBtn.addEventListener('click',async()=>{
-      try{
-        const r=await fetch('./example.json')
-        if(!r.ok)throw 0
-        const d=await r.json()
-        renderReport(d)
-      }catch{alert('example.json не найден — выберите файл вручную.')}
-    })
+        function openModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'flex';
+            modalImg.src = imageSrc;
+        }
 
-    printBtn.addEventListener('click',()=>window.print())
-  </script>
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>
