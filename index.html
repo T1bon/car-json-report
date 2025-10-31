@@ -34,7 +34,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>Car JSON Report — загрузчик</h1>
+      <h1>JapanStat - Viewer</h1>
       <div style="margin-left:auto" class="uploader">
         <input id="fileInput" type="file" accept=".json" />
         <button id="exampleBtn" class="btn small">Загрузить пример</button>
@@ -67,7 +67,7 @@
         </div>
 
         <aside>
-          <h3>Галерея (из characteristics.photos)</h3>
+          <h3>Галерея</h3>
           <div id="gallery" class="gallery"></div>
 
           <hr style="margin:12px 0">
@@ -159,7 +159,7 @@
         gallery.appendChild(img)
       })
 
-      // Аукционный лист (characteristics.auctionList)
+      // Аукционный лист
       const auctionList = c.auctionList || ''
       const auctionTrans = data.auctionSheetTranslationLink || data.translatedAuctionList || ''
       if(auctionList) {
