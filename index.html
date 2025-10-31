@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Car JSON Report — Отчёт об автомобиле</title>
 
-  <!-- Chart.js для графика пробега -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -25,10 +25,10 @@
     img.responsive{max-width:100%;height:auto;border-radius:8px;display:block}
     .gallery{display:flex;flex-wrap:wrap;gap:8px}
     .gallery img{width:120px;height:80px;object-fit:cover;border-radius:6px;
-                 cursor:pointer;border:2px solid transparent}
-    .gallery img:hover{border-color:var(--accent)}
+                 cursor:pointer;border:2px solid transparent;transition:0.2s}
+    .gallery img:hover{border-color:var(--accent);transform:scale(1.03)}
     .auction-sheet{width:100%;height:auto;border-radius:8px;
-                   box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+                   box-shadow:0 6px 18px rgba(0,0,0,0.08);cursor:pointer}
     .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .muted{color:var(--muted)}
     .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;
@@ -36,6 +36,16 @@
     .small{font-size:13px;padding:6px 8px}
     pre.json-preview{max-height:260px;overflow:auto;background:#0f1724;
                      color:#e6eef8;padding:12px;border-radius:8px}
+    /* === Lightbox === */
+    #lightboxOverlay {
+      position:fixed;inset:0;background:rgba(0,0,0,0.85);
+      display:none;align-items:center;justify-content:center;
+      z-index:1000;cursor:zoom-out;
+    }
+    #lightboxOverlay img {
+      max-width:95%;max-height:95%;border-radius:10px;
+      box-shadow:0 0 20px rgba(0,0,0,0.5);
+    }
     @media(max-width:980px){.grid{grid-template-columns:1fr} .two-col{grid-template-columns:1fr}}
   </style>
 </head>
@@ -63,14 +73,12 @@
 
           <hr style="margin:14px 0">
 
-          <!-- === История пробега === -->
           <h3>История пробега (тыс. км)</h3>
           <canvas id="mileageChart" width="400" height="220"></canvas>
           <div class="muted" style="margin-top:6px;text-align:center;">Пробег не скручен</div>
 
           <hr style="margin:14px 0">
 
-          <!-- === История торгов === -->
           <h3>История торгов</h3>
           <div id="historyAuctions"></div>
         </div>
@@ -84,15 +92,11 @@
           <h3>Аукционные листы</h3>
           <div class="two-col">
             <div>
-              <a id="auctionListLink" target="_blank" rel="noopener">
-                <img id="auctionListImg" class="auction-sheet" src="" alt="auction list">
-              </a>
+              <img id="auctionListImg" class="auction-sheet" src="" alt="auction list">
               <div class="muted" style="font-size:13px;margin-top:6px">Оригинал</div>
             </div>
             <div>
-              <a id="auctionTransLink" target="_blank" rel="noopener">
-                <img id="auctionTransImg" class="auction-sheet" src="" alt="auction translation">
-              </a>
+              <img id="auctionTransImg" class="auction-sheet" src="" alt="auction translation">
               <div class="muted" style="font-size:13px;margin-top:6px">Перевод</div>
             </div>
           </div>
@@ -114,6 +118,11 @@
     </div>
   </div>
 
+  <!-- === Lightbox Overlay === -->
+  <div id="lightboxOverlay">
+    <img src="" alt="Просмотр изображения" />
+  </div>
+
   <script>
     const $ = id => document.getElementById(id)
     const fileInput = $('fileInput')
@@ -123,10 +132,21 @@
     const gallery = $('gallery')
     const historyBlock = $('historyAuctions')
     const auctionListImg = $('auctionListImg')
-    const auctionListLink = $('auctionListLink')
     const auctionTransImg = $('auctionTransImg')
-    const auctionTransLink = $('auctionTransLink')
     const printBtn = $('printBtn')
+    const lightbox = $('lightboxOverlay')
+    const lightboxImg = lightbox.querySelector('img')
+
+    function openLightbox(src) {
+      lightboxImg.src = src
+      lightbox.style.display = 'flex'
+    }
+    function closeLightbox() {
+      lightbox.style.display = 'none'
+      lightboxImg.src = ''
+    }
+    lightbox.addEventListener('click', closeLightbox)
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox() })
 
     function safeGet(obj, path, def=null){
       try{return path.split('.').reduce((s,k)=>s?.[k],obj)??def}catch{return def}
@@ -151,21 +171,20 @@
       else photos.forEach(src=>{
         const img=document.createElement('img')
         img.src=src; img.alt='photo'
-        img.addEventListener('click',()=>window.open(src,'_blank'))
+        img.addEventListener('click',()=>openLightbox(src))
         gallery.appendChild(img)
       })
 
       // === Аукционные листы ===
       const auctionList=c.auctionList||''
       const auctionTrans=data.auctionSheetTranslationLink||''
-      if(auctionList){auctionListImg.src=auctionList;auctionListLink.href=auctionList}
-      if(auctionTrans){auctionTransImg.src=auctionTrans;auctionTransLink.href=auctionTrans}
+      if(auctionList){auctionListImg.src=auctionList;auctionListImg.onclick=()=>openLightbox(auctionList)}
+      if(auctionTrans){auctionTransImg.src=auctionTrans;auctionTransImg.onclick=()=>openLightbox(auctionTrans)}
 
       // === История пробега (Chart.js) ===
       const mileage = data.historyMileage || {}
       const ctx = document.getElementById('mileageChart').getContext('2d')
 
-      // Уничтожаем предыдущий график, если он есть
       if (window.mileageChart && typeof window.mileageChart.destroy === 'function') {
         window.mileageChart.destroy()
       }
@@ -246,13 +265,13 @@
         if(!photos.length) g.innerHTML='<div class="muted">Нет фото</div>'
         else photos.forEach(p=>{
           const im=document.createElement('img')
-          im.src=p;im.alt='lot';im.addEventListener('click',()=>window.open(p,'_blank'))
+          im.src=p;im.alt='lot';im.addEventListener('click',()=>openLightbox(p))
           g.appendChild(im)
         })
         if(h.auctionList){
           const link=document.createElement('div')
           link.style.marginTop='8px'
-          link.innerHTML=`<a href="${h.auctionList}" target="_blank" class="muted">Открыть аукционный лист</a>`
+          link.innerHTML=`<a href="#" class="muted" onclick="openLightbox('${h.auctionList}');return false;">Открыть аукционный лист</a>`
           row.appendChild(link)
         }
       })
@@ -260,7 +279,6 @@
       jsonPreview.textContent=JSON.stringify(data,null,2)
     }
 
-    // === Загрузка JSON ===
     fileInput.addEventListener('change',e=>{
       const f=e.target.files?.[0];if(!f)return
       const reader=new FileReader()
@@ -270,7 +288,6 @@
       reader.readAsText(f,'utf-8')
     })
 
-    // === Загрузка example.json ===
     exampleBtn.addEventListener('click',async()=>{
       try{
         const r=await fetch('./example.json')
@@ -280,7 +297,6 @@
       }catch{alert('example.json не найден — выберите файл вручную.')}
     })
 
-    // === Печать / PDF ===
     printBtn.addEventListener('click',()=>window.print())
   </script>
 </body>
