@@ -144,7 +144,7 @@
       $('engineCapacity').textContent=c.engineCapacity||'—'
       $('registrationDate').textContent=c.registrationDate||'—'
 
-      // Галерея
+      // === Галерея ===
       gallery.innerHTML=''
       const photos=c.photos||[]
       if(!photos.length) gallery.innerHTML='<div class="muted">Фотографий нет</div>'
@@ -155,37 +155,66 @@
         gallery.appendChild(img)
       })
 
-      // Аукционные листы
+      // === Аукционные листы ===
       const auctionList=c.auctionList||''
       const auctionTrans=data.auctionSheetTranslationLink||''
       if(auctionList){auctionListImg.src=auctionList;auctionListLink.href=auctionList}
       if(auctionTrans){auctionTransImg.src=auctionTrans;auctionTransLink.href=auctionTrans}
 
-      // === История пробега ===
-      const mileage=data.historyMileage||{}
-      const ctx=document.getElementById('mileageChart').getContext('2d')
-      const mileagePoints=Object.entries(mileage)
-        .map(([year,v])=>({year:parseInt(year),value:v?.value?parseFloat(v.value):null}))
-        .filter(p=>!isNaN(p.year)&&p.value!==null)
-        .sort((a,b)=>a.year-b.year)
-      if(window.mileageChart) window.mileageChart.destroy()
-      if(!mileagePoints.length){
-        ctx.font='14px sans-serif';ctx.fillText('Нет данных по пробегу',20,40)
+      // === История пробега (Chart.js) ===
+      const mileage = data.historyMileage || {}
+      const ctx = document.getElementById('mileageChart').getContext('2d')
+
+      // Уничтожаем предыдущий график, если он есть
+      if (window.mileageChart && typeof window.mileageChart.destroy === 'function') {
+        window.mileageChart.destroy()
+      }
+
+      const mileagePoints = Object.entries(mileage)
+        .map(([year, v]) => ({
+          year: parseInt(year),
+          value: v?.value ? parseFloat(v.value) : null
+        }))
+        .filter(p => !isNaN(p.year) && p.value !== null)
+        .sort((a, b) => a.year - b.year)
+
+      if (!mileagePoints.length) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+        ctx.font = '14px sans-serif'
+        ctx.fillText('Нет данных по пробегу', 20, 40)
       } else {
-        window.mileageChart=new Chart(ctx,{
-          type:'line',
-          data:{labels:mileagePoints.map(p=>p.year),
-                datasets:[{label:'Пробег не скручен',
-                           data:mileagePoints.map(p=>p.value),
-                           borderColor:'#16a34a',backgroundColor:'#16a34a',
-                           tension:0.3,fill:false,pointBackgroundColor:'#fff',
-                           pointBorderColor:'#16a34a',pointRadius:5,
-                           pointHoverRadius:6,borderWidth:2}]},
-          options:{scales:{x:{title:{display:true,text:'Год'},
-                              grid:{color:'rgba(0,0,0,0.05)'}},
-                           y:{title:{display:true,text:'тыс. км'},
-                              beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}},
-                   plugins:{legend:{display:false}}}
+        window.mileageChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: mileagePoints.map(p => p.year),
+            datasets: [{
+              label: 'Пробег не скручен',
+              data: mileagePoints.map(p => p.value),
+              borderColor: '#16a34a',
+              backgroundColor: '#16a34a',
+              tension: 0.3,
+              fill: false,
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#16a34a',
+              pointRadius: 5,
+              pointHoverRadius: 6,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            scales: {
+              x: {
+                title: { display: true, text: 'Год' },
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              },
+              y: {
+                title: { display: true, text: 'тыс. км' },
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' }
+              }
+            },
+            plugins: { legend: { display: false } }
+          }
         })
       }
 
@@ -231,6 +260,7 @@
       jsonPreview.textContent=JSON.stringify(data,null,2)
     }
 
+    // === Загрузка JSON ===
     fileInput.addEventListener('change',e=>{
       const f=e.target.files?.[0];if(!f)return
       const reader=new FileReader()
@@ -240,6 +270,7 @@
       reader.readAsText(f,'utf-8')
     })
 
+    // === Загрузка example.json ===
     exampleBtn.addEventListener('click',async()=>{
       try{
         const r=await fetch('./example.json')
@@ -249,6 +280,7 @@
       }catch{alert('example.json не найден — выберите файл вручную.')}
     })
 
+    // === Печать / PDF ===
     printBtn.addEventListener('click',()=>window.print())
   </script>
 </body>
