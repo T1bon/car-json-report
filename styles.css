@@ -1,0 +1,466 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.upload-section {
+    padding: 40px;
+    text-align: center;
+    background: #f8f9fa;
+}
+
+.upload-box {
+    border: 3px dashed #667eea;
+    border-radius: 15px;
+    padding: 60px 40px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.upload-box:hover {
+    border-color: #764ba2;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.upload-box h2 {
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+#fileInput {
+    display: none;
+}
+
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: transform 0.3s;
+    margin-top: 20px;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+.report-content {
+    display: none;
+    padding: 40px;
+}
+
+.car-info {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.car-info h2 {
+    color: #667eea;
+    margin-bottom: 25px;
+    font-size: 2em;
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.info-item {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.info-label {
+    font-weight: bold;
+    color: #764ba2;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+.info-value {
+    color: #333;
+    font-size: 1.2em;
+}
+
+/* --- Новый стиль для будущих торгов --- */
+.future-auctions {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.future-auctions h2 {
+    color: #17a2b8;
+    margin-bottom: 25px;
+    font-size: 2em;
+    border-bottom: 3px solid #17a2b8;
+    padding-bottom: 10px;
+}
+
+.future-auction-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    border-left: 5px solid #17a2b8; /* Отличительный цвет */
+}
+
+.future-auction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.future-auction-date {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #17a2b8;
+}
+
+.future-auction-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.future-detail-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.future-detail-label {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.future-detail-value {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #333;
+}
+/* --- Конец новых стилей --- */
+
+
+.attention-block {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-left: 5px solid #ff6b6b;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 20px rgba(255, 107, 107, 0.2);
+}
+
+.attention-block h2 {
+    color: #d63031;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.attention-item {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    border-left: 4px solid #ff6b6b;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.attention-item:last-child {
+    margin-bottom: 0;
+}
+
+.attention-icon {
+    font-size: 1.5em;
+    flex-shrink: 0;
+}
+
+.attention-text {
+    color: #333;
+    font-size: 1.05em;
+    line-height: 1.5;
+}
+
+.auction-history {
+    margin-bottom: 30px;
+}
+
+.auction-history h2 {
+    color: #667eea;
+    margin-bottom: 25px;
+    font-size: 2em;
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.auction-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    border-left: 5px solid #667eea;
+}
+
+.auction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.auction-date {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.auction-status {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.status-sold {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-not-sold {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.auction-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.detail-label {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.detail-value {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #333;
+}
+
+/* --- Стили для сетки фотографий (общие для будущих и прошлых) --- */
+.photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.photo-item {
+    position: relative;
+    padding-bottom: 75%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.photo-item:hover {
+    transform: scale(1.05);
+}
+
+.photo-item img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+/* --- Конец стилей для сетки фотографий --- */
+
+
+/* --- Стили для логотипа аукциона --- */
+.auction-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Отступ между логотипом и названием */
+    margin-bottom: 15px; /* Отступ снизу под логотипом */
+}
+
+.auction-logo {
+    height: 30px; /* Высота логотипа */
+    width: auto; /* Сохранение пропорций */
+    max-width: 100px; /* Максимальная ширина */
+    object-fit: contain; /* Вписывание в размеры */
+    border-radius: 4px; /* Скругление углов (по желанию) */
+}
+/* --- Конец стилей для логотипа --- */
+
+
+.auction-sheets {
+    margin-top: 30px;
+}
+
+.auction-sheets h2 {
+    color: #667eea;
+    margin-bottom: 25px;
+    font-size: 2em;
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 10px;
+}
+
+.sheets-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+}
+
+.sheet-box {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.sheet-box h3 {
+    color: #764ba2;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+.sheet-box img {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.sheet-box img:hover {
+    transform: scale(1.02);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* --- Стиль для сообщения об отсутствии истории --- */
+.no-history-message {
+    background: #f8f9fa;
+    border-left: 5px solid #6c757d;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    margin-top: 20px;
+}
+/* --- Конец стиля --- */
+
+
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 1.8em;
+    }
+
+    .sheets-container {
+        grid-template-columns: 1fr;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
