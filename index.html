@@ -569,51 +569,65 @@
                 return logoSrc;
             },
 
-            // --- Новая функция для получения данных для графика ---
+            // --- Изменённая функция для получения данных для графика ---
             getMileageHistoryData() {
                 if (!this.carData || !this.carData.historyMileage) {
                     return { labels: [], datasets: [] };
                 }
 
                 const mileageData = this.carData.historyMileage;
-                const labels = [];
-                const dataPoints = [];
+                const rawPoints = [];
 
                 // Извлекаем год из ключа (как из "2019", так и из "2025-03-14 14:10")
+                // И сохраняем его в формате { year, value, originalKey }
                 for (const key in mileageData) {
                     if (mileageData.hasOwnProperty(key) && mileageData[key].value !== undefined) {
                         const year = key.split('-')[0]; // Берём первую часть до первого '-'
                         if (!isNaN(year)) { // Проверяем, что это число
-                            labels.push(year);
-                            dataPoints.push(mileageData[key].value);
+                            rawPoints.push({
+                                year: parseInt(year),
+                                value: mileageData[key].value,
+                                originalKey: key // Сохраняем оригинальный ключ для сортировки
+                            });
                         }
                     }
                 }
 
-                // Сортируем данные по годам
-                const sortedData = labels.map((year, index) => ({ year, value: dataPoints[index] }))
-                                         .sort((a, b) => parseInt(a.year) - parseInt(b.year));
+                // Сортируем данные по году, а затем по оригинальному ключу (для одинаковых годов)
+                const sortedPoints = rawPoints.sort((a, b) => {
+                    if (a.year !== b.year) {
+                        return a.year - b.year;
+                    }
+                    return a.originalKey.localeCompare(b.originalKey);
+                });
 
-                const sortedLabels = sortedData.map(item => item.year);
-                const sortedValues = sortedData.map(item => item.value);
+                // Теперь формируем labels, dataPoints и массив для определения цветов сегментов
+                const labels = [];
+                const dataPoints = [];
+                const segmentColors = []; // Массив цветов для сегментов (линий между точками)
 
+                sortedPoints.forEach(point => {
+                    labels.push(point.year.toString());
+                    dataPoints.push(point.value);
+                });
+
+                // Определяем цвета сегментов
+                for (let i = 0; i < dataPoints.length - 1; i++) {
+                    if (dataPoints[i+1] < dataPoints[i]) {
+                        segmentColors.push('rgb(255, 99, 132)'); // Красный для убывающего участка
+                    } else {
+                        segmentColors.push('rgb(40, 167, 69)');  // Зелёный для возрастающего/равного участка
+                    }
+                }
+
+                // Возвращаем расширенные данные
                 return {
-                    labels: sortedLabels,
-                    datasets: [{
-                        label: 'Пробег (км)',
-                        data: sortedValues,
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        borderWidth: 3,
-                        pointBackgroundColor: '#28a745',
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                        tension: 0.3, // Плавность линии
-                        fill: true // Заполнение под линией
-                    }]
+                    labels: labels,
+                    dataPoints: dataPoints, // Необходимо для рендеринга
+                    segmentColors: segmentColors // Необходимо для рендеринга
                 };
             }
-            // --- Конец новой функции ---
+            // --- Конец изменённой функции ---
         };
         // --- Конец модуля данных ---
 
@@ -945,9 +959,66 @@
                 window.mileageChartInstance.destroy();
             }
 
+            // Создаем кастомный плагин для окрашивания сегментов
+            const segmentColorPlugin = {
+                id: 'segmentColorPlugin',
+                beforeDatasetDraw(chart, args, pluginOptions) {
+                    const { ctx, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+                    const meta = chart.getDatasetMeta(0);
+                    const points = meta.data;
+                    const dataPoints = chart.data._parsed.map(p => p.y);
+                    const segmentColors = chart.data.segmentColors;
+
+                    ctx.save();
+                    for (let i = 0; i < points.length - 1; i++) {
+                        const point1 = points[i];
+                        const point2 = points[i + 1];
+
+                        // Пропускаем сегменты с NaN
+                        if (isNaN(dataPoints[i]) || isNaN(dataPoints[i+1])) {
+                            continue;
+                        }
+
+                        const color = segmentColors[i] || 'rgba(40, 167, 69, 0.1)'; // Зелёный по умолчанию
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 3;
+
+                        ctx.beginPath();
+                        ctx.moveTo(point1.x, point1.y);
+                        ctx.lineTo(point2.x, point2.y);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+            };
+
+            // Регистрируем плагин
+            Chart.register(segmentColorPlugin);
+
+            // Подготовим данные для Chart.js
+            const chartJsData = {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Пробег (км)',
+                    data: chartData.dataPoints, // Передаем числовые значения
+                    borderColor: 'transparent', // Сделаем базовую линию прозрачной
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)', // Цвет заливки под графиком
+                    borderWidth: 0, // Убираем ширину базовой линии
+                    pointBackgroundColor: 'rgb(40, 167, 69)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    tension: 0.3, // Плавность линии
+                    fill: true // Заполнение под линией
+                }]
+            };
+
+            // Добавим кастомные данные в объект данных Chart.js
+            chartJsData._parsed = chartData.dataPoints.map((value, index) => ({ x: index, y: value })); // Для внутреннего использования Chart.js
+            chartJsData.segmentColors = chartData.segmentColors; // Наш кастомный массив цветов
+
             window.mileageChartInstance = new Chart(ctx, {
                 type: 'line',
-                data: chartData,
+                data: chartJsData,
                 options: {
                     responsive: true,
                     maintainAspectRatio: false, // Позволяет заполнить контейнер
@@ -975,9 +1046,12 @@
                         tooltip: {
                             mode: 'index',
                             intersect: false
-                        }
+                        },
+                        // Указываем наш кастомный плагин
+                        segmentColorPlugin: {}
                     }
-                }
+                },
+                plugins: [segmentColorPlugin]
             });
         };
         // --- Конец метода ---
