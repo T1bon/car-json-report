@@ -458,6 +458,26 @@
         /* --- Конец стиля --- */
 
 
+        /* --- Стиль для блока истории пробега --- */
+        .mileage-history {
+            margin-top: 30px;
+        }
+
+        .mileage-history h2 {
+            color: #28a745; /* Зелёный цвет для отличия */
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #28a745;
+            padding-bottom: 10px;
+        }
+
+        .chart-container {
+            height: 400px; /* Высота контейнера для графика */
+            position: relative;
+        }
+        /* --- Конец стиля --- */
+
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.8em;
@@ -496,6 +516,9 @@
         <span class="close-modal" onclick="closeModal()">&times;</span>
         <img class="modal-content" id="modalImage">
     </div>
+
+    <!-- Подключение Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         // --- Модуль для работы с данными ---
@@ -544,7 +567,53 @@
                     logoSrc = 'https://japanstat.com/_ipx/q_100&s_80x80/img/default-auction-logo.webp';
                 }
                 return logoSrc;
+            },
+
+            // --- Новая функция для получения данных для графика ---
+            getMileageHistoryData() {
+                if (!this.carData || !this.carData.historyMileage) {
+                    return { labels: [], datasets: [] };
+                }
+
+                const mileageData = this.carData.historyMileage;
+                const labels = [];
+                const dataPoints = [];
+
+                // Извлекаем год из ключа (как из "2019", так и из "2025-03-14 14:10")
+                for (const key in mileageData) {
+                    if (mileageData.hasOwnProperty(key) && mileageData[key].value !== undefined) {
+                        const year = key.split('-')[0]; // Берём первую часть до первого '-'
+                        if (!isNaN(year)) { // Проверяем, что это число
+                            labels.push(year);
+                            dataPoints.push(mileageData[key].value);
+                        }
+                    }
+                }
+
+                // Сортируем данные по годам
+                const sortedData = labels.map((year, index) => ({ year, value: dataPoints[index] }))
+                                         .sort((a, b) => parseInt(a.year) - parseInt(b.year));
+
+                const sortedLabels = sortedData.map(item => item.year);
+                const sortedValues = sortedData.map(item => item.value);
+
+                return {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: 'Пробег (км)',
+                        data: sortedValues,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#28a745',
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        tension: 0.3, // Плавность линии
+                        fill: true // Заполнение под линией
+                    }]
+                };
             }
+            // --- Конец новой функции ---
         };
         // --- Конец модуля данных ---
 
@@ -573,6 +642,10 @@
                 const html = this.generateMainContent();
                 content.innerHTML = html;
                 content.scrollIntoView({ behavior: 'smooth' });
+
+                // --- Инициализация графика после вставки HTML ---
+                this.renderMileageChart();
+                // --- Конец инициализации ---
             },
 
             generateMainContent() {
@@ -619,6 +692,7 @@
                 html += this.renderAttentionBlock();
                 html += this.renderAuctionSheets();
                 html += this.renderAuctionHistory();
+                html += this.renderMileageHistory(); // Добавляем HTML для графика
 
                 return html;
             },
@@ -677,7 +751,7 @@
                         html += '<h4 style="margin: 20px 0 10px 0; color: #17a2b8;">📸 Фотографии:</h4><div class="photos-grid">';
                         auction.photos.forEach(photo => {
                             html += `
-                                <div class="photo-item" onclick="openModal('${photo}')">
+                                <div class="photo-item" onclick="openModal(\'${photo}\')">
                                     <img src="${photo}" alt="Фото автомобиля">
                                 </div>
                             `;
@@ -728,7 +802,7 @@
                     html += `
                         <div class="sheet-box">
                             <h3>Оригинальный аукционный лист</h3>
-                            <img src="${chars.auctionList}" onclick="openModal('${chars.auctionList}')" alt="Оригинальный аукционный лист">
+                            <img src="${chars.auctionList}" onclick="openModal(\'${chars.auctionList}\')" alt="Оригинальный аукционный лист">
                         </div>
                     `;
                 }
@@ -737,7 +811,7 @@
                     html += `
                         <div class="sheet-box">
                             <h3>Перевод аукционного листа</h3>
-                            <img src="${DataManager.carData.auctionSheetTranslationLink}" onclick="openModal('${DataManager.carData.auctionSheetTranslationLink}')" alt="Перевод аукционного листа">
+                            <img src="${DataManager.carData.auctionSheetTranslationLink}" onclick="openModal(\'${DataManager.carData.auctionSheetTranslationLink}\')" alt="Перевод аукционного листа">
                         </div>
                     `;
                 }
@@ -817,7 +891,7 @@
                             html += '<h4 style="margin: 20px 0 10px 0; color: #667eea;">📸 Фотографии:</h4><div class="photos-grid">';
                             allPhotos.forEach(photo => {
                                 html += `
-                                    <div class="photo-item" onclick="openModal('${photo}')">
+                                    <div class="photo-item" onclick="openModal(\'${photo}\')">
                                         <img src="${photo}" alt="Фото автомобиля или аукционный лист">
                                     </div>
                                 `;
@@ -833,9 +907,80 @@
 
                 html += '</div>'; // auction-history
                 return html;
+            },
+
+            // --- Новый метод для рендеринга HTML блока графика ---
+            renderMileageHistory() {
+                // Проверяем, есть ли данные для графика
+                const chartData = DataManager.getMileageHistoryData();
+                if (chartData.labels.length === 0) {
+                    return ''; // Не отображаем блок, если нет данных
+                }
+
+                return `
+                    <div class="mileage-history">
+                        <h2>📈 История пробега</h2>
+                        <div class="chart-container">
+                            <canvas id="mileageChart"></canvas>
+                        </div>
+                    </div>
+                `;
             }
+            // --- Конец метода ---
         };
         // --- Конец модуля отображения ---
+
+
+        // --- Метод для отрисовки графика ---
+        Renderer.renderMileageChart = function() {
+            const chartData = DataManager.getMileageHistoryData();
+            if (chartData.labels.length === 0) {
+                return; // Нечего рисовать
+            }
+
+            const ctx = document.getElementById('mileageChart').getContext('2d');
+
+            // Уничтожаем предыдущий экземпляр графика, если он существует
+            if (window.mileageChartInstance) {
+                window.mileageChartInstance.destroy();
+            }
+
+            window.mileageChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Позволяет заполнить контейнер
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Год'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Пробег (км)'
+                            },
+                            beginAtZero: false, // Не начинать ось Y с 0, если данные этого не требуют
+                            // suggestedMin: 0 // Можно раскомментировать, если хочется, чтобы шкала всегда начиналась от 0 или чуть ниже
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+        };
+        // --- Конец метода ---
 
 
         // --- Обработчик загрузки файла ---
@@ -874,3 +1019,4 @@
     </script>
 </body>
 </html>
+
