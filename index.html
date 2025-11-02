@@ -687,7 +687,8 @@
 
                     // --- Логотип аукциона для истории аукциона ---
                     let logoSrc = auction.logo; // Используем логотип из данных
-                    if (!logoSrc && auction.asnetName && auction.asnetName.toUpperCase().includes('USS')) {
+                    // Проверяем group в historyAuctions на наличие 'USS'
+                    if (!logoSrc && auction.group && auction.group.toUpperCase().includes('USS')) {
                         logoSrc = 'https://japanstat.com/_ipx/q_100&s_80x80/img/default-auction-logo.webp';
                     }
 
