@@ -131,6 +131,73 @@
             font-size: 1.2em;
         }
 
+        /* --- Новый стиль для будущих торгов --- */
+        .future-auctions {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .future-auctions h2 {
+            color: #17a2b8;
+            margin-bottom: 25px;
+            font-size: 2em;
+            border-bottom: 3px solid #17a2b8;
+            padding-bottom: 10px;
+        }
+
+        .future-auction-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-left: 5px solid #17a2b8; /* Отличительный цвет */
+        }
+
+        .future-auction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .future-auction-date {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #17a2b8;
+        }
+
+        .future-auction-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .future-detail-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .future-detail-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .future-detail-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+        /* --- Конец новых стилей --- */
+
+
         .attention-block {
             background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
             border-left: 5px solid #ff6b6b;
@@ -456,7 +523,48 @@
                 </div>
             `;
 
-            // Важная информация
+            // --- Новый блок: Будущие торги ---
+            if (carData.futureAuctions && carData.futureAuctions.length > 0) {
+                html += `
+                    <div class="future-auctions">
+                        <h2>🔮 Будущие торги</h2>
+                `;
+                carData.futureAuctions.forEach(auction => {
+                    html += `
+                        <div class="future-auction-card">
+                            <div class="future-auction-header">
+                                <div class="future-auction-date">📅 ${auction.lotTradeDate || 'Дата не указана'} ${auction.lotTradeTime || ''}</div>
+                            </div>
+                            <div class="future-auction-details">
+                                <div class="future-detail-item">
+                                    <div class="future-detail-label">Аукцион</div>
+                                    <div class="future-detail-value">${auction.asnetName || 'Не указан'}</div>
+                                </div>
+                                <div class="future-detail-item">
+                                    <div class="future-detail-label">Лот</div>
+                                    <div class="future-detail-value">${auction.lotNumber || 'Не указан'}</div>
+                                </div>
+                                <div class="future-detail-item">
+                                    <div class="future-detail-label">Оценка</div>
+                                    <div class="future-detail-value">${auction.rating?.value || 'Не указана'}</div>
+                                </div>
+                                <div class="future-detail-item">
+                                    <div class="future-detail-label">Стартовая цена</div>
+                                    <div class="future-detail-value">${formatPrice(auction.priceStart)} ¥</div>
+                                </div>
+                                <div class="future-detail-item">
+                                    <div class="future-detail-label">Пробег</div>
+                                    <div class="future-detail-value">${formatNumber(auction.mileage)} км</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            // --- Конец нового блока ---
+
+            // Важная информация (теперь после будущих торгов)
             if (carData.attention && carData.attention.length > 0) {
                 html += `
                     <div class="attention-block">
