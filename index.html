@@ -321,6 +321,7 @@
             color: #333;
         }
 
+        /* --- Стили для сетки фотографий (общие для будущих и прошлых) --- */
         .photos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -350,6 +351,7 @@
             height: 100%;
             object-fit: cover;
         }
+        /* --- Конец стилей для сетки фотографий --- */
 
         .auction-sheets {
             margin-top: 30px;
@@ -557,8 +559,23 @@
                                     <div class="future-detail-value">${formatNumber(auction.mileage)} км</div>
                                 </div>
                             </div>
-                        </div>
                     `;
+
+                    // --- Фотографии для будущего аукциона ---
+                    if (auction.photos && auction.photos.length > 0) {
+                        html += '<h4 style="margin: 20px 0 10px 0; color: #17a2b8;">📸 Фотографии:</h4><div class="photos-grid">';
+                        auction.photos.forEach(photo => {
+                            html += `
+                                <div class="photo-item" onclick="openModal('${photo}')">
+                                    <img src="${photo}" alt="Фото автомобиля">
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
+                    // --- Конец блока фотографий ---
+
+                    html += '</div>'; // Закрытие .future-auction-card
                 });
                 html += '</div>';
             }
