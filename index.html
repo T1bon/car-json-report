@@ -359,6 +359,7 @@
             display: flex;
             align-items: center;
             gap: 10px; /* Отступ между логотипом и названием */
+            margin-bottom: 15px; /* Отступ снизу под логотипом */
         }
 
         .auction-logo {
@@ -558,10 +559,15 @@
                     `;
 
                     // --- Логотип аукциона для будущего аукциона ---
-                    if (auction.logo) {
+                    let logoSrc = auction.logo; // Используем логотип из данных
+                    if (!logoSrc && auction.asnetName && auction.asnetName.toUpperCase().includes('USS')) {
+                        logoSrc = 'https://japanstat.com/_ipx/q_100&s_80x80/img/default-auction-logo.webp';
+                    }
+
+                    if (logoSrc) {
                         html += `
                             <div class="auction-logo-container">
-                                <img src="${auction.logo}" alt="Логотип аукциона ${auction.asnetName}" class="auction-logo">
+                                <img src="${logoSrc}" alt="Логотип аукциона ${auction.asnetName}" class="auction-logo">
                                 <div class="future-detail-value">${auction.asnetName || 'Не указан'}</div>
                             </div>
                         `;
@@ -680,10 +686,15 @@
                     `;
 
                     // --- Логотип аукциона для истории аукциона ---
-                    if (auction.logo) {
+                    let logoSrc = auction.logo; // Используем логотип из данных
+                    if (!logoSrc && auction.asnetName && auction.asnetName.toUpperCase().includes('USS')) {
+                        logoSrc = 'https://japanstat.com/_ipx/q_100&s_80x80/img/default-auction-logo.webp';
+                    }
+
+                    if (logoSrc) {
                         html += `
                             <div class="auction-logo-container">
-                                <img src="${auction.logo}" alt="Логотип аукциона ${auction.asnetName}" class="auction-logo">
+                                <img src="${logoSrc}" alt="Логотип аукциона ${auction.asnetName}" class="auction-logo">
                                 <div class="detail-value">${auction.asnetName}</div>
                             </div>
                         `;
