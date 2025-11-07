@@ -477,6 +477,57 @@
         }
         /* --- Конец стиля --- */
 
+        /* --- Новые стили для аккордеона истории торгов --- */
+        .auction-history-accordion {
+            margin-top: 20px;
+        }
+
+        .accordion-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .accordion-button:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .accordion-button::after {
+            content: '▼';
+            transition: transform 0.3s;
+        }
+
+        .accordion-button[aria-expanded="true"]::after {
+            transform: rotate(180deg);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #f8f9fa;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .accordion-content.open {
+            max-height: 1000px; /* Достаточно большая высота для содержимого */
+        }
+
+        .previous-auctions-container {
+            padding: 20px;
+        }
+        /* --- Конец стилей аккордеона --- */
+
 
         @media (max-width: 768px) {
             .header h1 {
@@ -660,6 +711,10 @@
                 // --- Инициализация графика после вставки HTML ---
                 this.renderMileageChart();
                 // --- Конец инициализации ---
+
+                // --- Инициализация аккордеона истории торгов ---
+                this.initAuctionHistoryAccordion();
+                // --- Конец инициализации ---
             },
 
             generateMainContent() {
@@ -838,83 +893,40 @@
                 let html = `<div class="auction-history"><h2>📊 История торгов</h2>`;
 
                 if (DataManager.carData.historyAuctions && DataManager.carData.historyAuctions.length > 0) {
-                    DataManager.carData.historyAuctions.forEach(auction => {
-                        const statusClass = auction.status.code === 'SOLD' ? 'status-sold' : 'status-not-sold';
-
-                        html += `
-                            <div class="auction-card">
-                                <div class="auction-header">
-                                    <div class="auction-date">📅 ${auction.lotTradeDate} ${auction.lotTradeTime || ''}</div>
-                                    <div class="auction-status ${statusClass}">${auction.status.value}</div>
-                                </div>
-                        `;
-
-                        const logoSrc = DataManager.getLogoSrc(auction);
-                        if (logoSrc) {
-                            html += `
-                                <div class="auction-logo-container">
-                                    <img src="${logoSrc}" alt="Логотип аукциона ${auction.asnetName}" class="auction-logo">
-                                    <div class="detail-value">${auction.asnetName}</div>
-                                </div>
-                            `;
-                        } else {
-                            html += `<div class="detail-value">${auction.asnetName}</div>`;
-                        }
-
-                        html += `
-                                <div class="auction-details">
-                                    <div class="detail-item">
-                                        <div class="detail-label">Лот</div>
-                                        <div class="detail-value">${auction.lotNumber}</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">Оценка</div>
-                                        <div class="detail-value">${auction.rating.value}</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">Стартовая цена</div>
-                                        <div class="detail-value">${Formatter.formatPrice(auction.priceStart)} ¥</div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <div class="detail-label">Финальная цена</div>
-                                        <div class="detail-value" style="color: #28a745; font-weight: bold;">${Formatter.formatPrice(auction.priceEnd)} ¥</div>
-                                    </div>
-                        `;
-                        if (auction.lastBid) {
-                            html += `
-                                <div class="detail-item">
-                                    <div class="detail-label">Последняя ставка</div>
-                                    <div class="detail-value" style="color: #28a745; font-weight: bold;">${Formatter.formatPrice(auction.lastBid)} ¥</div>
-                                </div>
-                            `;
-                        }
-                        html += `
-                                    <div class="detail-item">
-                                        <div class="detail-label">Пробег</div>
-                                        <div class="detail-value">${Formatter.formatNumber(auction.mileage)} км</div>
-                                    </div>
-                                </div>
-                        `;
-
-                        let allPhotos = [...(auction.photos || [])];
-                        if (auction.auctionList) {
-                            allPhotos.unshift(auction.auctionList);
-                        }
-
-                        if (allPhotos.length > 0) {
-                            html += '<h4 style="margin: 20px 0 10px 0; color: #667eea;">📸 Фотографии:</h4><div class="photos-grid">';
-                            allPhotos.forEach(photo => {
-                                html += `
-                                    <div class="photo-item" onclick="openModal(\'${photo}\')">
-                                        <img src="${photo}" alt="Фото автомобиля или аукционный лист">
-                                    </div>
-                                `;
-                            });
-                            html += '</div>';
-                        }
-
-                        html += '</div>'; // auction-card
+                    // --- Сортировка и разделение торгов ---
+                    // Сортируем по дате (от самой поздней к самой ранней)
+                    const sortedAuctions = [...DataManager.carData.historyAuctions].sort((a, b) => {
+                        // Простая строковая сортировка, работает для формата YYYY-MM-DD HH:MM
+                        return b.lotTradeDate.localeCompare(a.lotTradeDate);
                     });
+
+                    // Берём последний торг (или несколько, если нужно) как "последние"
+                    const latestAuction = sortedAuctions[0];
+                    const previousAuctions = sortedAuctions.slice(1); // Все остальные
+                    // --- Конец разделения ---
+
+                    // Рендерим последний торг
+                    html += this.renderAuctionCard(latestAuction, 'latest');
+
+                    // Если есть предыдущие торги, оборачиваем их в аккордеон
+                    if (previousAuctions.length > 0) {
+                        html += `
+                            <div class="auction-history-accordion">
+                                <button class="accordion-button" type="button" aria-expanded="false" aria-controls="previousAuctionsContent">
+                                    <span>Предыдущие торги (${previousAuctions.length})</span>
+                                </button>
+                                <div class="accordion-content" id="previousAuctionsContent">
+                                    <div class="previous-auctions-container">
+                        `;
+                        previousAuctions.forEach(auction => {
+                            html += this.renderAuctionCard(auction, 'previous');
+                        });
+                        html += `
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
                 } else {
                     html += '<div class="no-history-message">Не найдена история торгов для этого автомобиля</div>';
                 }
@@ -922,6 +934,89 @@
                 html += '</div>'; // auction-history
                 return html;
             },
+
+            // --- Вспомогательная функция для рендеринга отдельной карточки аукциона ---
+            renderAuctionCard(auction, type) {
+                const statusClass = auction.status.code === 'SOLD' ? 'status-sold' : 'status-not-sold';
+                const cardClass = type === 'previous' ? 'auction-card previous-auction' : 'auction-card'; // Добавляем класс для предыдущих, если нужно стилизовать отдельно
+
+                let html = `
+                    <div class="${cardClass}">
+                        <div class="auction-header">
+                            <div class="auction-date">📅 ${auction.lotTradeDate} ${auction.lotTradeTime || ''}</div>
+                            <div class="auction-status ${statusClass}">${auction.status.value}</div>
+                        </div>
+                `;
+
+                const logoSrc = DataManager.getLogoSrc(auction);
+                if (logoSrc) {
+                    html += `
+                        <div class="auction-logo-container">
+                            <img src="${logoSrc}" alt="Логотип аукциона ${auction.asnetName}" class="auction-logo">
+                            <div class="detail-value">${auction.asnetName}</div>
+                        </div>
+                    `;
+                } else {
+                    html += `<div class="detail-value">${auction.asnetName}</div>`;
+                }
+
+                html += `
+                        <div class="auction-details">
+                            <div class="detail-item">
+                                <div class="detail-label">Лот</div>
+                                <div class="detail-value">${auction.lotNumber}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Оценка</div>
+                                <div class="detail-value">${auction.rating.value}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Стартовая цена</div>
+                                <div class="detail-value">${Formatter.formatPrice(auction.priceStart)} ¥</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Финальная цена</div>
+                                <div class="detail-value" style="color: #28a745; font-weight: bold;">${Formatter.formatPrice(auction.priceEnd)} ¥</div>
+                            </div>
+                `;
+                if (auction.lastBid) {
+                    html += `
+                        <div class="detail-item">
+                            <div class="detail-label">Последняя ставка</div>
+                            <div class="detail-value" style="color: #28a745; font-weight: bold;">${Formatter.formatPrice(auction.lastBid)} ¥</div>
+                        </div>
+                    `;
+                }
+                html += `
+                            <div class="detail-item">
+                                <div class="detail-label">Пробег</div>
+                                <div class="detail-value">${Formatter.formatNumber(auction.mileage)} км</div>
+                            </div>
+                        </div>
+                `;
+
+                let allPhotos = [...(auction.photos || [])];
+                if (auction.auctionList) {
+                    allPhotos.unshift(auction.auctionList);
+                }
+
+                if (allPhotos.length > 0) {
+                    html += '<h4 style="margin: 20px 0 10px 0; color: #667eea;">📸 Фотографии:</h4><div class="photos-grid">';
+                    allPhotos.forEach(photo => {
+                        html += `
+                            <div class="photo-item" onclick="openModal(\'${photo}\')">
+                                <img src="${photo}" alt="Фото автомобиля или аукционный лист">
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+
+                html += '</div>'; // auction-card
+                return html;
+            },
+            // --- Конец вспомогательной функции ---
+
 
             // --- Новый метод для рендеринга HTML блока графика ---
             renderMileageHistory() {
@@ -1053,6 +1148,22 @@
                 },
                 plugins: [segmentColorPlugin]
             });
+        };
+        // --- Конец метода ---
+
+
+        // --- Метод для инициализации аккордеона истории торгов ---
+        Renderer.initAuctionHistoryAccordion = function() {
+            const accordionButton = document.querySelector('.auction-history-accordion .accordion-button');
+            const accordionContent = document.querySelector('.auction-history-accordion .accordion-content');
+
+            if (accordionButton && accordionContent) {
+                accordionButton.addEventListener('click', function() {
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    accordionContent.classList.toggle('open');
+                });
+            }
         };
         // --- Конец метода ---
 
