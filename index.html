@@ -512,7 +512,7 @@
 
         .accordion-content {
             max-height: 0;
-            overflow: hidden;
+            overflow: hidden; /* Скрывает содержимое, когда закрыто */
             transition: max-height 0.3s ease-out;
             background: #f8f9fa;
             border-radius: 0 0 10px 10px;
@@ -520,7 +520,10 @@
         }
 
         .accordion-content.open {
-            max-height: 1000px; /* Достаточно большая высота для содержимого */
+            max-height: none; /* Отключаем max-height */
+            height: auto; /* Позволяем высоте быть автоматической */
+            overflow-y: auto; /* Добавляем прокрутку по Y, если содержимое больше контейнера */
+            max-height: 40vh; /* Ограничиваем высоту, например, 40% от высоты вьюпорта */
         }
 
         .previous-auctions-container {
